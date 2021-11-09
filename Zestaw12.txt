@@ -1,0 +1,471 @@
+/* 
+LABORATORIUM NR: 12
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 8, 9 (wszystkie)
+UWAGI:
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_11'; /* U mnie w folderze Praca_domowa_11 są wszystkie pliki, które podano do zestawu dwunastego. */
+
+/*zadanie 1****************************************************************;*/
+
+options mprint;
+
+/* Zakładamy, że wczytywane zbiory mają unikalne, w skali globalnej, nazwy zmiennych. */
+
+/* Tworzę pomocnicze makro %stworz_zbior(nazwa, zbior), żeby zrobić rekurencję w data stepach. */
+
+%macro stworz_zbior(nazwa, zbior);
+
+data &nazwa;
+set &zbior;
+run;
+
+%mend stworz_zbior;
+
+/* Makro pomocnicze do wyrzucenia zmiennej &zmienna ze zbioru &zbior. */
+
+%macro wyrzuc_zmienna(zbior, zmienna);
+
+data &zbior;
+set &zbior;
+drop &zmienna;
+run;
+
+%mend wyrzuc_zmienna;
+
+%macro wycinaj(z, zbior, zmienna);
+
+data wytnij;
+		
+	set &z;
+	
+	/* Wczytuję zbiór o nazwie będącej wartością zmiennej &zbior. */
+	call execute("%stworz_zbior(" ||&zbior||", "  || &zbior || "); ");
+	
+	/* Wycinam ze zbioru &zbior zmienną &zmienna. */
+	call execute("%wyrzuc_zmienna(" ||&zbior||", " || &zmienna || "); ");
+	
+	drop &zmienna;
+	
+run;
+
+
+
+/* Łączę wszystkie zbiory o nazwie będącej wartością zmiennej &zbior ze zbioru &z. */
+
+proc sql noprint;
+select &zbior into: nazwy_zbiorow separated by ' '
+from wytnij
+;
+quit;
+
+%let i = 1;
+
+%let nazwa_zbioru = %scan(&nazwy_zbiorow, &i);
+
+data krok1;
+
+set &nazwa_zbioru;
+
+run;
+
+%do %while(&nazwa_zbioru ne );
+	%let i_poprz = &i;
+	%let i=%eval(&i+1);
+	%let nazwa_zbioru=%scan(&nazwy_zbiorow,&i);
+	data krok&i;
+		set krok&i_poprz;
+		merge &nazwa_zbioru;
+	run;
+%end;
+
+data zbior_sklejony;
+set krok&i;
+run;
+
+/* zbior_sklejony jest zbiorem wynikowym. */
+
+%mend wycinaj;
+
+data zbior1;
+x1 = 45; x2 = 523; output;
+x1 = 34; x2 = 1; output;
+run;
+
+data zbior2;
+y1 = 4; y2 = 5231; output;
+y1 = 3; y2 = 142; output;
+run;
+
+data zbior3;
+z1 = 415; z2 = 5423; output;
+z1 = 3534; z2 = 341; output;
+run;
+
+data zbior4;
+a1 = 450; a2 = 5; output;
+a1 = 345; a2 = 12; output;
+run;
+
+data zbior_z;
+zb = "zbior1"; zm = "x1"; output;
+zb = "zbior2"; zm = "y2"; output;
+zb = "zbior3"; zm = "z2"; output;
+zb = "zbior4"; zm = "a1"; output;
+run;
+
+%wycinaj(zbior_z, zb, zm);
+
+/*zadanie 2****************************************************************;*/
+
+options mprint;
+
+/* Zakładamy, że wszystkie zmienne są tego samego typu. */
+
+%macro kombinacje_zbioru(zbior, k);
+
+data zbior_z_kombinacjami;
+
+set &zbior;
+
+array x(*) $10 x:;
+
+array idx(&k);
+
+array kombinacja(&k) $10 komb1 - komb&k;
+
+idx[1] = 0;
+
+n = dim(x);
+
+ncomb=comb(n, &k);
+
+do ktora_kombinacja=1 to ncomb;
+      call lexcombi(n, &k, of idx[*]);
+      do h = 1 to &k;
+      	kombinacja[h] = x[idx[h]];
+      end;	
+      output;
+end;
+
+drop ktora_kombinacja ncomb x: idx1 - idx&k n h;
+
+run;
+
+%mend kombinacje_zbioru;
+
+data zbior_testowy_character;
+	x1 = 'Dawid'; x2 = 'Marek'; x3 = 'Kuba';
+run;
+
+%kombinacje_zbioru(zbior_testowy_character, 2);
+
+data zbior_testowy_numeric;
+	x1 = 1; x2 = 2; x3 = 3;
+run;
+
+%kombinacje_zbioru(zbior_testowy_numeric, 2);
+
+/*zadanie 3****************************************************************;*/
+
+options mprint;
+
+%macro zamien_na_bd(zbior, n);
+
+/* Z każdego wiersza wartości &n losowo wylosowanych zmiennych zastępuję brakami danych. */
+
+data &zbior._z_bd;
+set &zbior; 
+array iks _NUMERIC_; 
+/* x1, ..., xp - wszystkie zmienne numeryczne ze zbioru &zbior */
+/* Losuję n elementów bez zwracania ze zbioru {1, ..., p}. */
+p = dim(iks);
+do i=1 to &n;
+    u=.;
+    do while(u=.);
+        v=ceil(p * ranuni(0));
+        u=iks(v);
+        iks(v)=.;
+    end;
+end;
+drop p i u v;
+run;
+
+%mend zamien_na_bd;
+
+data zbior_testowy;
+x1 = 2; x2 = 63; x3 = 4; x4 = 213; x5 = 4; output;
+x1 = 52; x2 = 32; x3 = 45; x4 = 253; x5 = 32; output;
+x1 = 25; x2 = 34; x3 = 4345; x4 = 4313; x5 = 98; output;
+x1 = 12; x2 = 33; x3 = 23; x4 = 213; x5 = 81; output;
+x1 = 123; x2 = 0; x3 = 1; x4 = 2233; x5 = 43; output;
+run;
+
+%zamien_na_bd(zbior_testowy, 3);
+
+/*zadanie 4****************************************************************;*/
+
+options mprint;
+
+%macro losowy_zbior(lzm, lgrp);
+
+%do i = 1 %to &lzm;
+	data zbior&i;
+		%do j = 1 %to &lgrp;
+			ileA = ceil(15 * RANUNI(0));
+			do iter = 1 to ileA;
+				zm_&i = "A&j";
+				output;
+			end;
+		%end;
+	run;
+%end;
+
+%if (&lzm = 1) %then
+%do;
+	data zbior_&lzm.x&lgrp;
+	
+	set zbior1;
+	
+	drop ileA iter;
+	
+	run;
+%end;
+
+%else 
+%do;
+
+	data zbior_&lzm.x&lgrp;
+	set zbior1;
+	
+	merge %do i = 2 %to &lzm;
+        	zbior&i
+	%end;;
+	
+	drop ileA iter;
+	
+	run;
+	
+%end;
+
+/* Zbiór zbior_&lzm.x&lgrp jest zbiorem wynikowym. */
+
+%mend losowy_zbior;
+
+%losowy_zbior(1, 2);
+
+%losowy_zbior(3, 6);
+
+%losowy_zbior(5, 8);
+
+/*zadanie 5****************************************************************;*/
+
+options mprint;
+
+%macro podzial(zbior, zmienna);
+
+proc sql;
+select distinct &zmienna into :zm_podz separated by ' '
+from &zbior
+;
+quit;
+
+/* 
+Makrozmienna zm_podz dostaje wartosc stringa zbudowanego 
+z wartosci zmiennej "&zmienna" oddzielonych spacjami.
+*/
+
+%let i = 1;
+
+%let wartosc_zmiennej = %scan(&zm_podz, &i);
+
+
+%do %while(&wartosc_zmiennej ne );
+	
+	data zbior&i;
+	
+		set &zbior;
+		
+		if(&zmienna = &wartosc_zmiennej) then output;
+		
+	run;
+	
+	%let i=%eval(&i+1);
+	
+	%let wartosc_zmiennej=%scan(&zm_podz,&i);
+	
+%end;
+
+%mend podzial;
+
+data zbior_testowy;
+
+	x = 2; y = 5; output;
+	x = 0; y = 55; output;
+	x = 2; y = 42; output;
+	x = 2; y = 1; output;
+	x = 1; y = 16; output;
+	x = 3; y = 4; output;
+	x = 1; y = 5; output;
+	x = 5; y = 56; output;
+	x = 3; y = 8; output;
+	x = 6; y = 98; output;
+
+run;
+
+%podzial(zbior_testowy, x);
+
+/*zadanie 6****************************************************************;*/
+
+options mprint;
+
+/* Funkcja %symglobl zwraca 1, jeśli zmienna jest globalna oraz 0, gdy nie jest. */
+
+%macro czy_jest(zmienna);
+
+%if %symglobl(&zmienna) = 1 %then %put "Jest zmienna globalna o nazwie  &zmienna";
+%else %put "Nie ma zmiennej globalnej o nazwie: &zmienna";
+
+%mend czy_jest;
+
+%global x1;
+%global z1;
+
+%czy_jest(x1); /* Tak */
+
+%czy_jest(y5); /* Nie */
+
+%czy_jest(z1); /* Tak */
+
+/*zadanie 7****************************************************************;*/
+
+options mprint;
+
+%macro maks_z_kazdego_zbioru(bibl);
+proc sql noprint;
+select memname into :zbiory separated by ' '
+from Sashelp.vstable /* Zbiór Sashelp.vstable zawiera nazwy wszystkich istniejących bibliotek i nazwy zawartych w nich zbiorów. */
+having libname = "&bibl"
+;
+quit;
+
+%let i = 1;
+
+%let nazwa_zbioru=%scan(&zbiory,&i);
+
+%do %while(&nazwa_zbioru ne );
+
+	data zbior_licz_maks;
+	set &bibl..&nazwa_zbioru (keep = _numeric_);
+	run;
+
+	proc means data = zbior_licz_maks max;
+	run;
+	
+	%let i=%eval(&i+1);
+	
+	%let nazwa_zbioru=%scan(&zbiory,&i);
+	
+%end;
+
+%mend maks_z_kazdego_zbioru;
+
+/* Tutaj dodałem 3 zbiory o różnych nazwach do biblioteki WORK. */
+
+data LIB.zbior_testowy1;
+x1 = 2; x2 = 63; x3 = 4; x4 = 213; x5 = 4; output;
+x1 = 52; x2 = 32; x3 = 45; x4 = 253; x5 = 32; output;
+x1 = 25; x2 = 34; x3 = 4345; x4 = 4313; x5 = 98; output;
+x1 = 12; x2 = 33; x3 = 23; x4 = 213; x5 = 81; output;
+x1 = 123; x2 = 0; x3 = 1; x4 = 2233; x5 = 43; output;
+run;
+
+data LIB.zbior_testowy2;
+x1 = 2; x2 = 63; x3 = 4; x4 = 213; x5 = 4; output;
+x1 = 52; x2 = 32; x3 = 45; x4 = 253; x5 = 32; output;
+x1 = 25; x2 = 34; x3 = 4345; x4 = 4313; x5 = 98; output;
+x1 = 12; x2 = 33; x3 = 23; x4 = 213; x5 = 81; output;
+x1 = 123; x2 = 0; x3 = 1; x4 = 2233; x5 = 43; output;
+run;
+
+data LIB.zbior_testowy3;
+x1 = 2; x2 = 63; x3 = 4; x4 = 213; x5 = 4; output;
+x1 = 52; x2 = 32; x3 = 45; x4 = 253; x5 = 32; output;
+x1 = 25; x2 = 34; x3 = 4345; x4 = 4313; x5 = 98; output;
+x1 = 12; x2 = 33; x3 = 23; x4 = 213; x5 = 81; output;
+x1 = 123; x2 = 0; x3 = 1; x4 = 2233; x5 = 43; output;
+run;
+
+%maks_z_kazdego_zbioru(LIB);
+
+/*zadanie 8****************************************************************;*/
+
+options mprint;
+
+%macro usun_zm(zbior, litera);
+
+	proc sql noprint;
+		select name into :zmienna_bez separated by " "
+		from dictionary.columns
+		where LIBNAME = upcase("lib")
+		and MEMNAME = upcase("&zbior")
+		and upcase(name) not like "%" || "%upcase(&litera)"
+		/* "%" || "%upcase(&litera)" oznacza, że zmienna kończy się na literę &litera 
+		(zapis "%" dotyczy czegokolwiek zapisanego przed ostatnią literą) */	
+	;	
+	quit;
+	data lib.&zbior(keep = &zmienna_bez);
+		set lib.&zbior;
+	run;
+%mend usun_zm;
+
+
+
+data lib.zbior_testowy;
+xa = 2; xb = 63; xc = 4; xd = 213; xe = 4; output;
+xa = 52; xb = 32; xc = 45; xd = 253; xe = 32; output;
+xa = 25; xb = 34; xc = 4345; xd = 4313; xe = 98; output;
+xa = 12; xb = 33; xc = 23; xd = 213; xe = 81; output;
+xa = 123; xb = 0; xc = 1; xd = 2233; xe = 43; output;
+run;
+
+%usun_zm(zbior_testowy, a);
+
+/*zadanie 9****************************************************************;*/
+
+options mprint;
+
+%macro eksportuj_wszystko(bibl, dir);
+proc sql noprint;
+select memname into :zbiory separated by ' '
+from Sashelp.vstable /* Zbiór Sashelp.vstable zawiera nazwy wszystkich istniejących bibliotek i nazwy zawartych w nich zbiorów. */
+having libname = "&bibl"
+;
+quit;
+
+%let i = 1;
+
+%let nazwa_zbioru=%scan(&zbiory,&i);
+
+%do %while(&nazwa_zbioru ne );
+
+	proc export
+		data = &bibl..&nazwa_zbioru
+		outfile = "/folders/myfolders/&dir/&nazwa_zbioru..txt"
+	;		
+	run;	
+	
+	%let i=%eval(&i+1);
+	
+	%let nazwa_zbioru=%scan(&zbiory,&i);
+	
+%end;
+
+%mend eksportuj_wszystko;
+
+%eksportuj_wszystko(LIB, Praca_domowa_11);
+
+/*KONIEC*******************************************************************;*/

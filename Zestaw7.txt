@@ -1,0 +1,1093 @@
+/*
+LABORATORIUM NR: 7
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7 (wszystkie)
+UWAGI: Zrobiłem zadanie 3 wraz z gwiazdką (robiłem jednym zapytaniem).
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_6'; /* U mnie w folderze Praca_domowa_6 są wszystkie pliki, które podano do zestawu siódmego. */
+
+/*zadanie 1****************************************************************;*/
+
+/* Wyznaczam średnie, odchylenia standardowe, maksima za pomocą procedury SQL. */
+
+data zad1;
+set lib.l07z01;
+run;
+
+proc SQL;
+select mean(x, y, z, t) as srednia, sqrt(var(x, y, z, t)) as odchylenie_standardowe, max(x, y, z, t) as maksimum
+from zad1
+;
+QUIT;
+
+/* Tworzę zbiór zawierający maksima, odchylenia standardowe i średnie zmiennych. */
+
+proc SQL;
+create table trzy_statystyki_opisowe
+(
+    maksimum num,
+    odchylenie_standardowe num,
+    srednia num
+);
+/* Wstawiam do tablicy wyniki zapytania. */
+insert into trzy_statystyki_opisowe
+select mean(x, y, z, t) as srednia, sqrt(var(x, y, z, t)) as odchylenie_standardowe, max(x, y, z, t) as maksimum
+from zad1
+;
+QUIT;
+
+data zad1cd;
+set zad1;
+set trzy_statystyki_opisowe;
+
+if x = . then
+do;
+    bd_x + 1;
+    x = -1;
+end;
+
+if y = . then y = -1;
+if z = . then z = -1;
+if t = . then t = -1;
+
+if z > 60 then ile_z_wiecej_60 + 1;
+
+if x + y + z + t > 30 then suma_zm_wiek_30 + 1;
+
+retain bd_x 0 ile_z_wiecej_60 0 suma_zm_wiek_30 0;
+run;
+
+/* Tutaj jest podane, ile jest braków danych zmiennej x, ile razy zmienna z przyjmuje wartości większe niż 60 i ile razy
+suma wszystkich zmiennych przekracza 30.  */
+proc means data = zad1cd max;
+var bd_x ile_z_wiecej_60 suma_zm_wiek_30;
+run;
+
+proc sql;
+select avg(case
+       when mod(t, 2) = 0  then t
+       else .
+       end) as srednia_parzystych_t
+     , avg(case
+           when mod(t, 5) = 0 then t
+           else .
+           end) as srednia_t_wielok_5
+     , avg(case
+            when t > 50 & mod(t, 3) = 0 then t
+            else .
+            end) as srednia_t_reszta_przez_3_0
+     , avg(case
+            when t > 50 & mod(t, 3) = 1 then t
+            else .
+            end) as srednia_t_reszta_przez_3_1
+     , avg(case
+            when t > 50 & mod(t, 3) = 2 then t
+            else .
+            end) as srednia_t_reszta_przez_3_2
+from zad1cd
+quit;
+
+/*zadanie 2****************************************************************;*/
+
+data zad2;
+set lib.l07z02;
+run;
+
+/* (1) */
+
+/* SQL */
+
+proc sql;
+select avg(case
+       when o = 'A' then w
+       else .
+       end) as srednia_A
+     , avg(case
+       when o = 'E' then w
+       else .
+       end) as srednia_E
+from zad2
+quit;
+
+/* 4GL */
+
+data zad2_1;
+set lib.l07z02 end = koniec;
+if (o = 'A') then
+do;
+    suma_A + w;
+    ile_A + 1;
+end;
+if (o = 'E') then
+do;
+    suma_E + w;
+    ile_E + 1;
+end;
+
+if (koniec) then
+do;
+    srednia_A = suma_A / ile_A;
+    srednia_E = suma_E / ile_E;
+    output;
+end;
+
+retain suma_A 0 ile_A 0 suma_E 0 ile_E 0;
+drop r k w o suma_A ile_A suma_E ile_E;
+run;
+
+/* (2) */
+
+/* SQL */
+
+proc sql;
+select max(case
+           when o = 'C' and (k = 'III' or k = 'IV') then w
+           else .
+           end) as najlepszy_wynik
+from zad2
+quit;
+
+/* 4GL */
+
+data zad2_2;
+set lib.l07z02 end = koniec;
+if (o = 'C' and (k = 'III' or k = 'IV')) then
+do;
+    if(w > najlepszy_wynik) then najlepszy_wynik = w;
+end;
+if(koniec) then output;
+retain najlepszy_wynik 0;
+drop r k w o;
+run;
+
+/* (3) */
+
+/* SQL */
+
+proc sql;
+select avg(case
+       when o = 'A' then w
+       else .
+       end) as srednia_A
+     , avg(case
+       when o = 'B' then w
+       else .
+       end) as srednia_B
+     , avg(case
+       when o = 'C' then w
+       else .
+       end) as srednia_C
+     , avg(case
+       when o = 'D' then w
+       else .
+       end) as srednia_D
+     , avg(case
+       when o = 'E' then w
+       else .
+       end) as srednia_E
+from zad2
+quit;
+
+/* 4GL */
+
+data zad2_3;
+set lib.l07z02 end = koniec;
+
+if (o = 'A') then
+do;
+    suma_A + w;
+    ile_A + 1;
+end;
+
+if (o = 'B') then
+do;
+    suma_B + w;
+    ile_B + 1;
+end;
+
+if (o = 'C') then
+do;
+    suma_C + w;
+    ile_C + 1;
+end;
+
+if (o = 'D') then
+do;
+    suma_D + w;
+    ile_D + 1;
+end;
+
+if (o = 'E') then
+do;
+    suma_E + w;
+    ile_E + 1;
+end;
+
+if (koniec) then
+do;
+    srednia_A = suma_A / ile_A;
+    srednia_B = suma_B / ile_B;
+    srednia_C = suma_C / ile_C;
+    srednia_D = suma_D / ile_D;
+    srednia_E = suma_E / ile_E;
+    output;
+end;
+
+retain suma_A 0 suma_B 0 suma_C 0 suma_D 0 suma_E 0 ile_A 0 ile_B 0 ile_C 0 ile_D 0 ile_E 0;
+drop r k w o suma_A suma_B suma_C suma_D suma_E ile_A ile_B ile_C ile_D ile_E;
+run;
+
+/* (4) */
+
+/* SQL */
+
+/* Sprawdzam, jaki jest najlepszy rezultat dla osoby A, B, C, D i E. */
+
+proc sql;
+select max(case when
+           o = 'A' then w
+           else .
+           end) as max_A
+           , max(case when
+           o = 'B' then w
+           else .
+           end) as max_B
+           , max(case when
+           o = 'C' then w
+           else .
+           end) as max_C
+           , max(case when
+           o = 'D' then w
+           else .
+           end) as max_D
+           , max(case when
+           o = 'E' then w
+           else .
+           end) as max_E
+from zad2
+quit;
+
+/* Czyli: A: 10, B: 10, C: 10, D: 9, E: 10. */
+
+proc sql;
+select distinct k
+from
+(
+    select k
+    from zad2
+    where (w = 10 or w = 9)
+);
+quit;
+
+/* 4GL */
+
+/* Sprawdzam, jaki jest najlepszy rezultat dla osoby A, B, C, D i E. */
+
+data zad2_najl_wynik;
+set lib.l07z02 end = koniec;
+
+if (o = 'A') then
+do;
+    if(w > najlepszy_wynik_A) then najlepszy_wynik_A = w;
+end;
+
+if (o = 'B') then
+do;
+    if(w > najlepszy_wynik_B) then najlepszy_wynik_B = w;
+end;
+
+if (o = 'C') then
+do;
+    if(w > najlepszy_wynik_C) then najlepszy_wynik_C = w;
+end;
+
+if (o = 'D') then
+do;
+    if(w > najlepszy_wynik_D) then najlepszy_wynik_D = w;
+end;
+
+if (o = 'E') then
+do;
+    if(w > najlepszy_wynik_E) then najlepszy_wynik_E = w;
+end;
+
+if(koniec) then output;
+
+retain najlepszy_wynik_A 0 najlepszy_wynik_B 0 najlepszy_wynik_C 0 najlepszy_wynik_D 0 najlepszy_wynik_E 0;
+drop r k w o;
+run;
+
+/* Czyli: A: 10, B: 10, C: 10, D: 9, E: 10. */
+
+data zad2_4;
+set lib.l07z02 end = koniec;
+if (k = 'I') then
+do;
+    if(w = 10) then czy1 = 1;
+    if(w = 9) then
+    do;
+        if(o = 'D') then czy1 = 1;
+    end;
+end;
+
+if (k = 'II') then
+do;
+    if(w = 10) then czy2 = 1;
+    if(w = 9) then
+    do;
+        if(o = 'D') then czy2 = 1;
+    end;
+end;
+
+if (k = 'III') then
+do;
+    if(w = 10) then czy3 = 1;
+    if(w = 9) then
+    do;
+        if(o = 'D') then czy3 = 1;
+    end;
+end;
+
+if (k = 'IV') then
+do;
+    if(w = 10) then czy4 = 1;
+    if(w = 9) then
+    do;
+        if(o = 'D') then czy4 = 1;
+    end;
+end;
+
+if(koniec) then
+do;
+    if(czy1 = 1) then
+    do;
+         kwartal = 'pierwszy';
+         output;
+    end;
+
+    if(czy2 = 1) then
+    do;
+        kwartal = 'drugi';
+         output;
+    end;
+
+    if(czy3 = 1) then
+    do;
+        kwartal = 'trzeci';
+        output;
+    end;
+
+    if(czy4 = 1) then
+    do;
+        kwartal = 'czwarty';
+        output;
+    end;
+end;
+
+
+retain czy1 0 czy2 0 czy3 0 czy4 0;
+drop r k w o czy1 - czy4;
+run;
+
+/* (5) */
+
+/* SQL */
+
+proc sql;
+select distinct o
+from
+(
+    select o, w, max(w) as najl_wynik, k
+    from lib.l07z02
+    group by o
+)
+having (w = najl_wynik & (k = 'I' or k = 'II'))
+;
+quit;
+
+/* 4GL */
+
+/* Z wcześniejszego podpunktu: najlepszy wynik osoby A: 10, B: 10, C: 10, D: 9, E: 10. */
+
+data zad2_5;
+set lib.l07z02;
+if (w = 10 & (k = 'I' or k = 'II')) then
+do;
+    osoba = o;
+    output;
+end;
+if (w = 9 & o = 'D' & (k = 'I' or k = 'II')) then
+do;
+    osoba = o;
+    output;
+end;
+run;
+
+/* (6) */
+
+/* SQL */
+
+proc sql;
+select distinct r, k, o
+from
+(
+    select o, w, k, r, max(w) as max_w
+    from lib.l07z02
+    group by k, r
+)
+having w = max_w
+;
+quit;
+
+/* Czasem dla pewnego roku i kwartału było więcej niż 1 osoba, ponieważ może być tak, że 2 lub więcej osób ma maksymalny wynik. */
+
+/* 4GL */
+
+data zad2_6;
+set lib.l07z02;
+run;
+
+proc sort data = zad2_6 out = zad2_6_posort;
+by r k w;
+run;
+
+data zad2_6cd;
+set zad2_6_posort;
+by r k w;
+if (last.k = 1) then output;
+run;
+
+/* (7) */
+
+/* SQL */
+
+proc sql;
+select count(*)
+from
+(
+    select *
+    from
+    (
+        (select min(w) as min_w_B
+        from lib.l07z02
+        group by o
+        having o = 'B')
+        outer union /* Outer union - suma rozłączna */
+        (select w as w_A
+        from lib.l07z02
+        having o = 'A')
+    )
+    having w_A > min_w_B
+)
+;
+quit;
+
+/* 4GL */
+
+data zad2_7;
+set lib.l07z02;
+if (o = 'B') then
+do;
+    w_B = w;
+    output;
+end;
+drop r k w o;
+run;
+
+proc means data = zad2_7 min;
+var w_B;
+run;
+
+/* Zatem najgorszy wynik osoby B, to 2. */
+
+data zad2_7cd;
+set lib.l07z02;
+if(o = 'A' & w > 2) then ile + 1;
+retain ile 0;
+run;
+
+proc means data = zad2_7cd max;
+var ile;
+run;
+
+/* (8) */
+
+/* SQL */
+
+proc sql;
+select distinct o
+from
+(
+    select o, max(w) - min(w) as roznica
+    from lib.l07z02
+    group by o
+)
+having roznica = max(roznica)
+;
+quit;
+
+/* 4GL */
+
+data zad2_8;
+set lib.l07z02;
+run;
+
+proc sort data = zad2_8 out = zad2_8posort;
+by o w;
+run;
+
+data zad2_8cd;
+set zad2_8posort;
+by o w;
+if (first.o = 1) then min = w;
+if (last.o = 1) then
+do;
+    max = w;
+    roznica = max - min;
+    output;
+end;
+retain min max 0;
+run;
+
+proc means data = zad2_8cd max;
+var roznica;
+run;
+/* Widzimy, że maksymalna różnica wynosi 9. */
+
+data zad2_8wyn;
+set zad2_8cd;
+if roznica = 9 then output;
+drop r k w;
+run;
+
+/* (9) */
+
+/* SQL */
+
+proc sql;
+select distinct k
+from
+(
+    select k, count(*) as ile_os
+    from
+    (
+        select k, o
+        from
+        (
+            select k, o, w, max(w) as maks_w
+            from lib.l07z02
+            group by o
+        )
+        having w = maks_w
+    )
+)
+having ile_os > 1
+;
+quit;
+
+/* 4GL */
+
+/* Z wcześniejszego podpunktu wiemy, że najlepszym rezultatem osoby A jest: 10, osoby B: 10, osoby C: 10, osoby D: 9, osoby E: 10. */
+
+data zad2_9;
+set lib.l07z02;
+run;
+
+proc sort data = zad2_9 out = zad2_9posort;
+by k;
+run;
+
+data zad2_9cd;
+set zad2_9posort;
+by k;
+if (w = 9 & o = 'D') then ile_os + 1;
+if (w = 10) then ile_os + 1;
+if (last.k = 1) then
+do;
+    if (ile_os > 1) then output;
+    ile_os = 0;
+end;
+retain ile_os 0;
+drop r w o ile_os;
+run;
+
+/* (10) */
+
+/* SQL */
+
+proc sql;
+select distinct w_C
+from
+(
+    select w as w_C, k as kwartal
+    from lib.l07z02
+    having o = 'C'
+)
+where
+    (
+    (
+        select w, k
+        from lib.l07z02
+        having (k = kwartal & o = 'D' & w < w_C) /* W kwartale uzyskania wyniku przez osobę C, osoba D miała wynik gorszy. */
+    )
+    or not exists
+    (
+        select w, k
+        from lib.l07z02
+        having (k = kwartal & o = 'D') /* W kwartale uzyskania wyniku przez osobę C, osoba D nie startowała. */
+    )
+    )
+;
+quit;
+
+/* 4GL */
+
+data zad2_10_os_C;
+set lib.l07z02;
+if (o = 'C') then output;
+run;
+
+data zad2_10_os_D;
+set lib.l07z02;
+if (o = 'D') then output;
+run;
+
+data zad2_10;
+set zad2_10_os_C;
+output;
+set zad2_10_os_D;
+output;
+run;
+
+proc sort data = zad2_10 out = zad2_10_posort;
+by k w;
+run;
+
+data zad2_10cd;
+set zad2_10_posort;
+by k w;
+if (last.k = 1 & bylo_D = 0) then
+do;
+    wyn_C = w;
+    output;
+end;
+if(o = 'D') then bylo_D = 1;
+if(o = 'C' & bylo_D = 1) then
+do;
+    wyn_C = w;
+    output;
+end;
+if(last.k = 1) then bylo_D = 0;
+retain bylo_D 0 wyn_C 0;
+drop r k o bylo_D w;
+run;
+
+
+/* (11) */
+
+/* SQL */
+
+proc sql;
+select distinct w_C
+from
+(
+    select w as w_C, k as kwartal
+    from lib.l07z02
+    having o = 'C'
+)
+where exists
+(
+    (
+        select w, k
+        from lib.l07z02
+        having (k = kwartal & o = 'D' & w < w_C) /* W kwartale uzyskania wyniku przez osobę C, osoba D miała wynik gorszy. */
+    )
+
+)
+;
+quit;
+
+/* 4GL */
+
+data zad2_11_os_C;
+set lib.l07z02;
+if (o = 'C') then output;
+run;
+
+data zad2_11_os_D;
+set lib.l07z02;
+if (o = 'D') then output;
+run;
+
+data zad2_11;
+set zad2_11_os_C;
+output;
+set zad2_11_os_D;
+output;
+run;
+
+proc sort data = zad2_11 out = zad2_11_posort;
+by k w;
+run;
+
+data zad2_11cd;
+set zad2_11_posort;
+by k w;
+if(o = 'D') then bylo_D = 1;
+if(o = 'C' & bylo_D = 1) then
+do;
+    wyn_C = w;
+    output;
+end;
+if(last.k = 1) then bylo_D = 0;
+retain bylo_D 0 wyn_C 0;
+drop r k o bylo_D w;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+/* (1) */
+
+proc sql;
+select x, y
+from
+(
+    select distinct x, y, count(y) as czestosc_y
+    from lib.l07z03
+    group by x, y
+)
+having czestosc_y = max(czestosc_y)
+;
+quit;
+
+/* (2) */
+
+proc sql;
+select distinct x, y
+from
+(
+    select distinct x, y, count(y) as czestosc_y
+    from lib.l07z03
+    group by x, y
+)
+having czestosc_y = max(czestosc_y)
+;
+quit;
+
+/* (3) */
+
+proc sql;
+select distinct x
+from
+(
+    select x, count(y) as ile_najw_y
+    from
+    (
+        select x, y, max(y) as max_y
+        from lib.l07z03
+        group by x
+    )
+    group by x, y
+    having y = max_y
+)
+having ile_najw_y = 1
+;
+quit;
+
+/* (4) */
+
+/* Biorę takie wartości x, dla których nie ma wartości y występujących więcej niż 1 raz. */
+
+proc sql;
+select distinct x
+from
+(
+    select x, max(czestosc) as max_czestosc
+    from
+    (
+        select x, y, count(y) as czestosc
+        from lib.l07z03
+        group by x, y
+    )
+    group by x
+)
+having max_czestosc = 1
+;
+quit;
+
+/* Zbiór wyszedł pusty. Wszystko się zgadza, jak się spojrzy na zbiór L07z03. */
+
+/* (5) */
+
+proc sql;
+select distinct x
+from
+(
+    select x, count(y) as ile_roznych_y
+    from
+    (
+        select distinct x, y
+        from lib.l07z03
+        group by x, y
+    )
+    group by x
+)
+having ile_roznych_y = max(ile_roznych_y)
+;
+quit;
+
+/* (6) */
+
+/* Jeśli mamy k1 jedynek, k2 dwójek, ..., kn n (n jest liczbą naturalną), to musi być spełnione k1, ..., kn = 1. */
+
+proc sql;
+select x
+from lib.l07z03
+group by x
+having (min(y) = 1  & count(y) = max(y))
+/* count(distinct y) liczy wszystkie y (uwzględniając też powtarzające się) w całym zbiorze. */
+/* Jeśli min(y) = 1 i count(y) = max(y), to mamy zbiór {1, ..., count(y)} (bo wszystkie elementy w zbiorze są całkowite). */
+;
+quit;
+
+/* (7) */
+
+/* Jeśli mamy k1 jedynek, k2 dwójek, ..., kn n (n jest liczbą naturalną), to musi być spełnione k1, ..., kn >= 1. */
+
+proc sql;
+select x
+from lib.l07z03
+group by x
+having (min(y) = 1  & count(distinct y) = max(y))
+/* count(distinct y) liczy wszystkie różne y (czyli nie uwzględniając powtarzających się y) w całym zbiorze. */
+/* Gdy min(y) = 1 i count(distinct y) = max(y), to różne wartości y tworzą zbiór {1, ..., count(distinct y)}. */
+;
+quit;
+
+/* (8) */
+
+proc sql;
+select distinct y
+from
+(
+    select distinct ile_x_do_y, y, count(distinct x) as ile_wsz_x
+    from
+    (
+        select count(distinct x) as ile_x_do_y, x, y
+        from lib.l07z03
+        group by y
+    )
+)
+having ile_x_do_y >= (1/2) * ile_wsz_x
+;
+quit;
+
+/*zadanie 4****************************************************************;*/
+
+/* (1) */
+
+data zad4;
+set lib.l07z04;
+run;
+
+proc sql;
+select distinct id as wartosc_id from
+zad4
+where not exists
+(
+    select id from
+    zad4
+    where (year < 1993 and id = wartosc_id)
+);
+quit;
+
+/* (2) */
+
+proc sql;
+select distinct id from
+zad4
+having year = max(year) or year = min(year)
+;
+quit;
+
+/* (3) */
+
+/* Szukam wartości zmiennej id, która się pojawia w każdym roku. */
+
+proc sql;
+select distinct id  from
+zad4
+intersect all select id, year from zad4;
+;
+quit;
+
+/* Wyszedł mi pusty zbiór. Jak się spojrzy na zbiór L07z04.sas7bdat, to faktycznie nie ma takiego id, który jest w każdym roku,
+   więc się zgadza. */
+
+/*zadanie 5****************************************************************;*/
+
+data zad5_1;
+set lib.l07z05t1;
+run;
+
+data zad5_2;
+set lib.l07z05t2;
+run;
+
+/* (1) Sprawdzam, ile jest różnych wartosci zmiennej x, które znajdują się tylko w pierwszym zbiorze. */
+
+proc sql;
+select count(*) from
+(
+    (select distinct x from zad5_1)
+    except
+    (select x from zad5_2)
+)
+;
+quit;
+
+/* (2) Sprawdzam, ile jest różnych wartosci zmiennej x, które znajdują się tylko w drguim zbiorze. */
+
+proc sql;
+select count(*) from
+(
+    (select distinct x from zad5_2)
+    except
+    (select x from zad5_1)
+)
+;
+quit;
+
+/* (3) Sprawdzam, ile jest różnych wartosci zmiennej x, które znajdują się w obydwu zbiorach jednocześnie. */
+
+proc sql;
+select count(*) from
+(
+    (select distinct x from zad5_2)
+    intersect
+    (select distinct x from zad5_1)
+)
+;
+quit;
+
+/* (4) Sprawdzam, ile jest różnych wartosci zmiennej x, które nie znajdują się w obydwu zbiorach jednocześnie. */
+
+/* Różnica symetryczna C := ((A \ B) union (B \ A)) jest zbiorem wszystkich wartości x takich, że x należy do (A union B),
+   ale nie należy do (A intersect B). */
+
+proc sql;
+select count(*) from
+(
+    (
+        (select distinct x from zad5_1)
+        except
+        (select distinct x from zad5_2)
+    )
+    union
+    (
+    (select distinct x from zad5_2)
+    except
+    (select distinct x from zad5_1)
+    )
+)
+;
+quit;
+
+/*zadanie 6****************************************************************;*/
+
+data zad6;
+set lib.l07z06;
+run;
+
+/* (1) */
+
+proc sql;
+select x1
+     , min(x2) as min_x2_group_a2
+     , max(x2) as max_x2_group_a2
+from zad6
+group by A2
+having (x1 >= min_x2_group_a2 & x1 <= max_x2_group_a2)
+;
+quit;
+
+/* (2) */
+
+data zad6_1;
+set lib.l07z06;
+x = x1;
+a = a1;
+drop x1 a1 x2 a2;
+run;
+
+data zad6_2;
+set lib.l07z06;
+x = x2;
+a = a2;
+drop x1 a1 x2 a2;
+run;
+
+data zad6_laczony;
+set zad6_1;
+output;
+set zad6_2;
+output;
+run;
+
+proc sort data = zad6_laczony out = zad6_posort;
+by a;
+run;
+
+data zad6_cd;
+set zad6_posort;
+by a;
+i + 1;
+if (last.a = 1) then
+do;
+    dl_grupy = i;
+    output;
+    i = 0;
+end;
+retain i 0;
+run;
+
+proc sql;
+select a as nazwa_grupy
+from zad6_cd
+having dl_grupy = max(dl_grupy)
+;
+quit;
+
+/*zadanie 7****************************************************************;*/
+
+/* (1) */
+
+proc sql;
+select distinct miesiac
+from
+(
+    select month(dzien) as miesiac, count(r2) as ile_bd_r2
+    from lib.l07z07
+    group by month(dzien)
+    having r2 = .
+)
+having ile_bd_r2 = max(ile_bd_r2)
+;
+quit;
+
+/* (2) */
+
+proc sql;
+select distinct miesiac
+from
+(
+    select month(dzien) as miesiac, var(r1) as rozproszenie
+    from lib.l07z07
+    group by month(dzien)
+)
+having rozproszenie = max(rozproszenie)
+;
+quit;

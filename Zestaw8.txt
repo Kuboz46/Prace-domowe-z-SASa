@@ -1,0 +1,713 @@
+/*
+LABORATORIUM NR: 8
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (wszystkie)
+UWAGI: Zrobiłem czwarte zadanie (z konkursu na najkrótszy kod)
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_7'; /* U mnie w folderze Praca_domowa_7 są wszystkie pliki, które podano do zestawu ósmego. */
+
+/*zadanie 1****************************************************************;*/
+
+data zad1;
+set lib.l08z01_c1 (rename = (x = x_1));
+set lib.l08z01_c2 (rename = (x = x_2)) end = koniec;
+nr_roznicy + 1;
+if(x_1 ^= x_2) then ile_roznych + 1;
+if(ile_roznych = 1 & i = 0) then
+do;
+    put "Numer pierwszej różnicy to: " nr_roznicy ".";
+    i = 1;
+end;
+if(koniec) then put "Liczba elementów, którymi zmienne x się różnią, wynosi: " ile_roznych ".";
+retain ile_roznych 0 nr_roznicy 0 i 0;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+/* I) Tablice (array) */
+
+data zbior_maly;
+set lib.l08z02_maly;
+run;
+
+data zbior_duzy;
+set lib.l08z02_duzy;
+run;
+
+proc transpose data = zbior_maly out = zbior_maly_transp (drop = _name_);
+run;
+
+data zad2_I;
+    set zbior_maly_transp zbior_duzy end = koniec;
+    array kolzbmaly[*] col:;
+    array iden[102] (102 * 0); /* Zbiór mały ma 102 wierszy. */
+    if _N_ = 1 then
+        do i = 1 to 102;
+            iden[i] = kolzbmaly[i];
+        end;
+    if (id in iden) then
+    do;
+        suma + sales;
+        ile + 1;
+    end;
+    if koniec then
+    do;
+        srednia = suma / ile;
+        output;
+    end;
+    keep srednia;
+    retain suma 0 ile 0;
+run;
+
+/* II) Opcja POINT = */
+
+data zad2_II;
+set lib.l08z02_maly end = koniec;
+
+set lib.l08z02_duzy point = id;
+
+suma + sales;
+ile + 1;
+
+if(koniec) then
+do;
+    srednia = suma / ile;
+    output;
+end;
+keep srednia;
+retain suma 0 ile 0;
+run;
+
+/* III) Procedura SQL z podzapytaniem */
+
+proc sql;
+select avg(sales) as srednia
+from
+(
+    select id as iden, sales
+    from lib.l08z02_duzy
+)
+where exists
+(
+    select id
+    from lib.l08z02_maly
+    having id = iden
+)
+;
+quit;
+
+/* IV) Procedura SQL i produkt kartezjański */
+
+proc sql;
+
+ select avg(sales) as srednia
+ from
+ (
+     select id as iden, sales
+    from lib.l08z02_duzy
+ )
+ CROSS JOIN /* Działa jak produkt kartezjanski. */
+ (
+     select id
+     from lib.l08z02_maly
+ )
+ ;
+
+quit;
+
+/* V) Procedura SQL i JOIN */
+
+data zbior_maly;
+set lib.l08z02_maly;
+run;
+
+data zbior_duzy;
+set lib.l08z02_duzy;
+run;
+
+proc sql;
+select avg(sales) as srednia
+from zbior_duzy
+join zbior_maly
+on zbior_maly.id = zbior_duzy.id
+;
+quit;
+
+/* VI) Polecenie MERGE */
+
+/* Połączę zbiór mały ze zbiorem dużym po zmiennej id. */
+
+data zbior_maly;
+set lib.l08z02_maly;
+run;
+
+data zbior_duzy;
+set lib.l08z02_duzy;
+run;
+
+/* By połączyć zbiory po zmiennej id, oba zbiory muszą być posortowane względem zmiennej id. */
+
+proc sort data = zbior_maly out = zbior_maly_posort;
+by id;
+run;
+
+proc sort data = zbior_duzy out = zbior_duzy_posort;
+by id;
+run;
+
+data zad2_6;
+set zbior_maly_posort end = koniec;
+
+merge zbior_duzy_posort;
+by id;
+
+suma + sales;
+
+ile + 1;
+
+if(koniec) then
+do;
+    srednia = suma / ile;
+    output;
+end;
+
+keep srednia;
+retain suma 0 ile 0;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+/* a) Opcja POINT = */
+
+data zad3_a;
+set lib.l08z03_numery end = koniec;
+set lib.l08z02_duzy point = numer;
+
+suma + sales;
+ile + 1;
+
+if(koniec) then
+do;
+    srednia = suma / ile;
+    output;
+end;
+
+retain suma 0 ile 0;
+
+drop id sales suma ile;
+
+run;
+
+/* Polecenie MERGE */
+
+data l08z02_duzy_z_nr;
+set lib.l08z02_duzy;
+numer + 1;
+retain numer 0;
+run;
+
+
+data zad3_b;
+set lib.l08z03_numery end = koniec;
+
+merge lib.l08z03_numery l08z02_duzy_z_nr;
+by numer;
+
+suma + sales;
+ile + 1;
+
+if(koniec) then
+do;
+    srednia = suma / ile;
+    output;
+end;
+
+retain suma 0 ile 0;
+
+drop id numer sales suma ile;
+
+run;
+
+/*zadanie 4****************************************************************;*/
+
+data z1_bez_bd;
+set lib.l08z04_kropki;
+if (z1 ^= .) then output;
+drop z2 z3 z4;
+run;
+
+data z2_bez_bd;
+set lib.l08z04_kropki;
+if (z2 ^= .) then output;
+drop z1 z3 z4;
+run;
+
+data z3_bez_bd;
+set lib.l08z04_kropki;
+if (z3 ^= .) then output;
+drop z1 z2 z4;
+run;
+
+data z4_bez_bd;
+set lib.l08z04_kropki;
+if (z4 ^= .) then output;
+drop z1 z2 z3;
+run;
+
+data zbior_bezkropek;
+set z1_bez_bd;
+set z2_bez_bd;
+set z3_bez_bd;
+set z4_bez_bd;
+run;
+
+/*zadanie 5****************************************************************;*/
+
+data LICZBY;
+do i = 1 to 100;
+    x = rannor(123);
+    output;
+end;
+drop i;
+run;
+
+data SUMA;
+set LICZBY;
+
+if(_N_ >= 96) then stop;
+
+/* Korzystam z funkcji "LEAD", która była pokazywana na Wykładzie. */
+j1 = (_N_+1);
+set LICZBY(RENAME = (x = x_next1)) point = j1 ;
+
+j2 = (_N_+2);
+set LICZBY(RENAME = (x = x_next2)) point = j2 ;
+
+j3 = (_N_+3);
+set LICZBY(RENAME = (x = x_next3)) point = j3 ;
+
+j4 = (_N_+4);
+set LICZBY(RENAME = (x = x_next4)) point = j4 ;
+
+j5 = (_N_+5);
+set LICZBY(RENAME = (x = x_next5)) point = j5 ;
+
+suma = x + x_next1 + x_next2 + x_next3 + x_next4 + x_next5;
+
+drop x x_next1 x_next2 x_next3 x_next4 x_next5;
+
+run;
+
+/*zadanie 6****************************************************************;*/
+
+data L08z06_SQL_to_4GL_fin;
+set lib.l08z06_sql_to_4gl;
+by x;
+suma_y + y;
+ile_y + 1;
+if (last.x = 1) then
+do;
+    srednia = suma_y / ile_y;
+    output;
+    suma_y = 0;
+    ile_y = 0;
+end;
+retain suma_y 0 ile_y 0;
+drop suma_y ile_y;
+run;
+
+/*zadanie 7****************************************************************;*/
+
+data l08z07_zbior;
+data = mdy(01, 01, 2007);
+format data ddmmyy10.;
+do i = 1 to 365;
+    output;
+    data + 1;
+end;
+run;
+
+data l08z07_zb_pom1;
+set lib.l08z07_zb1 end = koniec;
+if (i = 0) then
+do;
+    dt = mdy(01, 01, 2007);
+    output;
+end;
+format dt ddmmyy10.;
+format data ddmmyy10.;
+
+do while (dt ^= data);
+    z1 = 0;
+    dt + 1;
+    if(dt = data) then
+    do;
+        z1 = x;
+        output;
+        continue;
+    end;
+    output;
+end;
+i + 1;
+retain i 0 z1 0;
+drop i dt data x;
+run;
+
+
+data l08z07_zb_pom2;
+set lib.l08z07_zb2 end = koniec;
+if (i = 0) then
+do;
+    dt = mdy(01, 01, 2007);
+    output;
+end;
+format dt ddmmyy10.;
+format data ddmmyy10.;
+
+do while (dt ^= data);
+    z2 = 0;
+    dt + 1;
+    if(dt = data) then
+    do;
+        z2 = x;
+        output;
+        continue;
+    end;
+    output;
+end;
+i + 1;
+retain i 0 z2 0;
+drop i dt data x;
+run;
+
+
+
+data l08z07_zb_pom3;
+set lib.l08z07_zb3 end = koniec;
+if (i = 0) then
+do;
+    dt = mdy(01, 01, 2007);
+    output;
+end;
+format dt ddmmyy10.;
+format data ddmmyy10.;
+
+do while (dt ^= data);
+    z3 = 0;
+    dt + 1;
+    if(dt = data) then
+    do;
+        z3 = x;
+        output;
+        continue;
+    end;
+    output;
+end;
+if(koniec & dt ^= '31/12/2007') then
+do;
+    dt + 1;
+    z3 = 0;
+    output;
+    output;
+    output;
+end;
+i + 1;
+retain i 0 z3 0;
+drop i dt data x;
+run;
+
+
+data l08z07_zb_pom4;
+set lib.l08z07_zb4 end = koniec;
+if (i = 0) then
+do;
+    dt = mdy(01, 01, 2007);
+    output;
+end;
+format dt ddmmyy10.;
+format data ddmmyy10.;
+do while (dt ^= data);
+    z4 = 0;
+    dt + 1;
+    if(dt = data) then
+    do;
+        z4 = x;
+        output;
+        continue;
+    end;
+    output;
+end;
+if(koniec & dt ^= '31/12/2007') then
+do;
+    dt + 1;
+    z4 = 0;
+    output;
+    output;
+end;
+i + 1;
+retain i 0 z4 0;
+drop i dt data x;
+run;
+
+data l08z07_zb_pom5;
+set lib.l08z07_zb5 end = koniec;
+if (i = 0) then
+do;
+    dt = mdy(01, 01, 2007);
+    output;
+end;
+format dt ddmmyy10.;
+format data ddmmyy10.;
+
+do while (dt ^= data);
+    z5 = 0;
+    dt + 1;
+    if(dt = data) then
+    do;
+        z5 = x;
+        output;
+        continue;
+    end;
+    output;
+end;
+if(koniec & dt ^= '31/12/2007') then
+do;
+    dt + 1;
+    z5 = 0;
+    output;
+end;
+i + 1;
+retain i 0 z5 0;
+drop i dt data x;
+run;
+
+
+
+
+data l08z07_wyn;
+set l08z07_zbior;
+set l08z07_zb_pom1;
+set l08z07_zb_pom2;
+set l08z07_zb_pom3;
+set l08z07_zb_pom4;
+set l08z07_zb_pom5;
+
+
+
+total = z1 + z2 + z3 + z4 + z5;
+
+if (total = 0) then total = .;
+
+if(z1 = 0) then z1 = .;
+if(z2 = 0) then z2 = .;
+if(z3 = 0) then z3 = .;
+if(z4 = 0) then z4 = .;
+if(z5 = 0) then z5 = .;
+
+run;
+
+/*zadanie 8****************************************************************;*/
+
+data zad8_1;
+set lib.l08z08_jan;
+aktualnosc = 1;
+run;
+
+data zad8_2;
+set lib.l08z08_feb;
+aktualnosc = 2;
+run;
+
+data zad8_3;
+set lib.l08z08_mar;
+aktualnosc = 3;
+run;
+
+data zad8_4;
+set lib.l08z08_apr;
+aktualnosc = 4;
+run;
+
+proc sql;
+select distinct osoba, wynik
+from
+(
+    (select osoba, wynik, aktualnosc
+    from zad8_1)
+
+    union
+
+    (select osoba, wynik, aktualnosc
+    from zad8_2)
+
+    union
+
+    (select osoba, wynik, aktualnosc
+    from zad8_3)
+
+    union
+
+    (select osoba, wynik, aktualnosc
+    from zad8_4)
+)
+group by osoba
+having aktualnosc = max(aktualnosc)
+;
+quit;
+
+/*zadanie 9****************************************************************;*/
+
+data zad9;
+set lib.l08z09_x (rename = (x = x1));
+set lib.l08z09_y (rename = (y = y1));
+set lib.l08z09_xy (rename = (x = x2 y = y2));
+run;
+
+proc sql;
+select count(*) as ile_obserwacji
+from zad9
+where (x1 = x2 & y1 = y2)
+;
+quit;
+
+/*zadanie 10***************************************************************;*/
+
+data L08z10_pierwszy_uaktualniony;
+set lib.l08z10_pierwszy (rename = (sales = sales1));
+set lib.l08z10_drugi (rename = (year = year2));
+
+i = 1;
+
+j = 0;
+
+do while (i <= 12 & j = 0);
+
+    if(i = 1 & month = 1) then
+    do;
+        if(Jan ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Jan;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 2 & month = 2 & j = 0) then
+    do;
+        if(Feb ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Feb;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 3 & month = 3 & j = 0) then
+    do;
+        if(Mar ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Mar;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 4 & month = 4 & j = 0) then
+    do;
+        if(Apr ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Apr;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 5 & month = 5 & j = 0) then
+    do;
+        if(May ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + May;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 6 & month = 6 & j = 0) then
+    do;
+        if(Jun ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Jun;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 7 & month = 7 & j = 0) then
+    do;
+        if(Jul ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Jul;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 8 & month = 8 & j = 0) then
+    do;
+        if(Aug ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Aug;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 9 & month = 9 & j = 0) then
+    do;
+        if(Sep ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Sep;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 10 & month = 10 & j = 0) then
+    do;
+        if(Oct ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Oct;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 11 & month = 11 & j = 0) then
+    do;
+        if(Nov ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Nov;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    if(i = 12 & month = 12 & j = 0) then
+    do;
+        if(Dec ^= . & sales1 ^=.) then
+        do;
+            sales = sales1 + Dec;
+        end;
+        else if(sales1 ^=.) then sales = sales1;
+        j = 1;
+    end;
+
+    i + 1;
+end;
+
+drop year2 sales1 Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec i j;
+
+run;

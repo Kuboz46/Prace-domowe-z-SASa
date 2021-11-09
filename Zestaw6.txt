@@ -1,0 +1,265 @@
+/*
+LABORATORIUM NR: 6
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6 (wszystkie)
+UWAGI: Brak
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_5'; /* U mnie w folderze Praca_domowa_5 są wszystkie pliki, które podano do zestawu szóstego. */
+
+/*zadanie 1****************************************************************;*/
+
+data zad1;
+    set lib.l06z01;
+    /* Korzystając z funkcji input, biorę taki informat, by każdą datę z odpowiedniej zmiennej odczytać. */
+    data_ev_1 = input(event_A,anydtdte11.);
+    data_ev_2 = input(event_B,anydtdte11.);
+    data_ev_3 = input(event_C,DDMMYY10.);    /* Tutaj dałem inny informat niż, w reszcie zmiennych, gdyż
+                               program czytał czasem dzień i miesiąc na odwrót. */
+    data_ev_4 = input(event_D,anydtdte11.);
+    format data_ev_1 data_ev_2 data_ev_3 data_ev_4 date8.;
+    max_date = max(data_ev_1, data_ev_2, data_ev_3, data_ev_4, max_date); retain max_date; /* Najpóźniejsza data */
+    min_date = min(data_ev_1, data_ev_2, data_ev_3, data_ev_4, min_date); retain min_date; /* Najwcześniejsza data */
+
+/* (1) */
+
+data zad1_a;
+     set zad1 end = koniec;
+         if(koniec) then
+         do;
+             duration_exp = max_date - min_date + 1;
+             output;
+         end;
+     keep duration_exp;
+run;
+
+/* (2) */
+
+data zad1_b;
+    set lib.l06z01;
+    data_ev_1 = input(event_A,anydtdte11.);
+    data_ev_2 = input(event_B,anydtdte11.);
+    data_ev_3 = input(event_C,DDMMYY10.);
+    data_ev_4 = input(event_D,anydtdte11.);
+    format data_ev_1 data_ev_2 data_ev_3 data_ev_4 date8.;
+    max_subject_date = max(data_ev_1, data_ev_2, data_ev_3, data_ev_4);
+    min_subject_date = min(data_ev_1, data_ev_2, data_ev_3, data_ev_4);
+    duration_subject = max_subject_date- min_subject_date + 1;
+    keep lastname firstname duration_subject;
+run;
+
+/* (3) */
+
+data zad1_c;
+    do krok_exp = 1 to ile_obs;
+        set zad1_a nobs = ile_obs point = krok_exp;
+        set zad1_b;
+        ratio = duration_subject/duration_exp;
+    end;
+    format ratio fract.;
+    keep lastname firstname duration_subject duration_exp ratio;
+run;
+
+/* Teraz zbiór z wynikami sortuję rosnąco w grupach wyznaczonych przez
+licznik i mianownik. */
+
+/* Tworzę pomocniczy zbiór, gdzie biorę największy wspólny dzielnik z duration_exp, duration_subject
+za pomocą funkcji gcd() i sortuję po nim rosnąco. */
+
+data zad1_c_nwd;
+    set zad1_c;
+    NWD = gcd(duration_exp, duration_subject);
+    if NWD ^= 1 then
+        do;
+            duration_exp = duration_exp / NWD;
+            duration_subject = duration_subject / NWD;
+        end;
+    drop NWD;
+run;
+
+proc sort data = zad1_c_nwd out = zad1_c_posort (drop = duration_subject duration_exp) ;
+by duration_subject duration_exp;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+/* Tworzenie zbioru. */
+
+data alfabet;
+input lit1 $ lit2 $ lit3 $ lit4 $ lit5 $ lit6 $ lit7 $ lit8 $ lit9 $ lit10 $ lit11 $ lit12 $ lit13 $ lit14 $ lit15 $ lit16 $ lit17 $ lit18 $ lit19 $ lit20 $ lit21 $ lit22 $ lit23 $ lit24 $ lit25 $ lit26 $;
+cards;
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+;
+run;
+
+
+data L02z02;
+set alfabet;
+array alph(12) $1 (12 * "a");
+array lit(26) lit:;
+do i = 1 to 12;
+    k = ceil(26 * RANUNI(0));
+    alph[i] = lit[k];
+end;
+drop i lit1 - lit26 k;
+keep alph:;
+run;
+
+/* Transpozycja. */
+
+/* Bez procedury TRANSPOSE. */
+
+data L02z02_transpozycja_a; /* bedziemy transponowac tabele 'zbior_pom' */
+  set L02z02 end = koniec;
+  array tymcz(24, 12) $1 _temporary_;
+
+  /* wczytujemy zbior do tablicy TYMCZ */
+  array wej(*) alph:; /* Tablica, która przechowa
+                      poszczególne obserwacje. */
+  do i=1 to dim(wej);
+      tymcz(_N_, i) = wej(i);
+  end;
+
+  /* Wypiszemy transponowaną tablicę do zbioru. */
+  array col(24) $1 (24 * "a"); /* Tablica, która przechowa nam
+                 obserwacje do outputu. */
+
+  if koniec then do;
+      do j=1 to 12;
+          do i=1 to dim(col);
+              col[i]=tymcz(i,j);
+          end;
+          output;
+      end;
+  end;
+
+  drop i j alph:;
+run;
+
+
+/* Z użyciem funkcji TRANSPOSE. */
+
+proc transpose data = L02z02 out = L02z02_transpozycja_b;
+VAR alph1 - alph12;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+data zbior31;
+set lib.L06Z03;
+run;
+
+proc transpose data = zbior31 out = zbior32;
+run;
+
+data zbior33;
+set zbior32;
+drop COL1;
+run;
+
+
+Proc SORT
+  data=zbior33
+  out=zbior34
+  SORTSEQ=LINGUISTIC
+(
+LOCALE=pl_PL
+
+)
+;
+    by _NAME_;
+run;
+
+proc transpose data = zbior34 out = L06Z03_posort_alf;
+var _NAME_;
+run;
+
+/* To jest zbiór wynikowy. */
+
+/*zadanie 4****************************************************************;*/
+
+data zbior_a;
+set lib.l06z04_a;
+run;
+
+proc sort data= zbior_a out = zbior_posort;
+by firstname lastname date;
+run;
+
+proc transpose data = zbior_posort out = zbior_transp (drop = _name_);
+by firstname lastname;
+id date; /* Wskazuje zmienną z nazwami zmiennych po transpozycji. */
+run;
+
+/*zadanie 5****************************************************************;*/
+
+data L06z05_a;
+set lib.l06z05_a;
+if (grp = 'a') then nr = 1;
+if (grp = 'b') then nr = 2;
+if (grp = 'c') then nr = 3;
+if (grp = 'd') then nr = 4;
+if (grp = 'e') then nr = 5;
+if (grp = 'f') then nr = 6;
+if (grp = 'g') then nr = 7;
+if (grp = 'h') then nr = 8;
+if (grp = 'i') then nr = 9;
+if (grp = 'j') then nr = 10;
+run;
+
+/* Na początku dodałem sobie do zbioru nową zmienią nr, która określa mi numer bloku.
+   A potem transponuje wg tej nowej zmiennej grupujacej. */
+
+proc sort data = L06z05_a out = zbior;
+by nr;
+run;
+
+proc transpose data = zbior out = L06z05_b;
+var grp l1 - l3;
+run;
+
+/*zadanie 6****************************************************************;*/
+
+data zbior6_a;
+set lib.l06z06_a;
+run;
+
+
+Proc SORT
+  data=zbior6_a
+  out=zbior61
+  SORTSEQ=LINGUISTIC
+(
+LOCALE=pl_PL
+NUMERIC_COLLATION=ON
+)
+;
+    by i descending j;
+run;
+
+/* Kolumna j jest posortowana malejąco zgodnie z kodowaniem ASCII. */

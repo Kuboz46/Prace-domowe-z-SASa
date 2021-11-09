@@ -1,0 +1,528 @@
+/*
+LABORATORIUM NR: 4
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 (wszystkie)
+UWAGI:
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_3'; /* U mnie w folderze Praca_domowa_3 są wszystkie pliki, które podano do zestawu czwartego. */
+
+/*zadanie 1****************************************************************;*/
+
+/* a) */
+
+data zad1_a;
+set lib.l04z01;
+array osodp(74) pytanie_1-pytanie_37 pytanie:;
+do i = 1 to 37;
+    if(osodp(i) = 'A') then
+    ileodpA + 1;
+    if(osodp(i) = 'B') then
+    ileodpB + 1;
+    if(osodp(i) = 'C') then
+    ileodpC + 1;
+    if(osodp(i) = 'D') then
+    ileodpD + 1;
+end;
+output;
+ileodpA = 0;
+ileodpB = 0;
+ileodpC = 0;
+ileodpD = 0;
+drop i pytanie_1 - pytanie_37;
+run;
+
+/* b) */
+
+data zad1_b;
+set lib.l04z01;
+array osodp(74) pytanie_1-pytanie_37 pytanie:;
+do i = 1 to 37;
+    if(osodp(i) = 'A') then
+    ileA + 1;
+    if(osodp(i) = 'B') then
+    ileB + 1;
+    if(osodp(i) = 'C') then
+    ileC + 1;
+    if(osodp(i) = 'D') then
+    ileD + 1;
+end;
+run;
+
+proc means data = zad1_b max;
+var ileA ileB ileC ileD; /* Maksimum ze zmiennej ileA mówi, ile razy padła odpowiedź A w całej ankiecie.
+Dla ileB, ileC, ileD analogicznie. */
+run;
+
+/* c) */
+
+data zad1_c;
+set lib.l04z01;
+array osodp(74) pytanie_1-pytanie_37 pytanie:;
+array odpAnapyt(37) odpApytan_1 - odpApytan_37;
+array odpBnapyt(37) odpBpytan_1 - odpBpytan_37;
+array odpCnapyt(37) odpCpytan_1 - odpCpytan_37;
+array odpDnapyt(37) odpDpytan_1 - odpDpytan_37;
+/* odpApytan_1 mówi, ile razy dano na pytanie 1 odpowiedź A. Dla innych zmiennych analogicznie. */
+do i = 1 to 37;
+    if(osodp(i) = 'A') then
+    odpAnapyt(i) + 1;
+    if(osodp(i) = 'B') then
+    odpBnapyt(i) + 1;
+    if(osodp(i) = 'C') then
+    odpCnapyt(i) + 1;
+    if(osodp(i) = 'D') then
+    odpDnapyt(i) + 1;
+end;
+run;
+
+proc means data = zad1_c max;
+var odpApytan_1 - odpApytan_37 odpBpytan_1 - odpBpytan_37 odpCpytan_1 - odpCpytan_37 odpDpytan_1 - odpDpytan_37;
+run;
+
+/* d) */
+
+data zad1_d;
+set lib.l04z01;
+array osodp(74) pytanie_1-pytanie_37 pytanie:;
+do i = 1 to 37;
+    if(osodp(i) = 'A' or osodp(i) = 'B' or osodp(i) = 'C' or osodp(i) = 'D') then
+    brak + 1;
+end;
+/* Jeżeli osoba odpowiedziała na mniej niż 36 pytań, to znaczy, że nie odpowiedziała na więcej niż 1 pytanie,
+gdyż jest 37 pytań. */
+if (brak < 36) then ile + 1;
+brak = 0;
+drop brak i;
+run;
+
+proc means data = zad1_d max;
+var ile;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+/* Losowanie ze zwracaniem. */
+
+data zad2_a;
+set lib.l04z02;
+array xsy(33) x1 - x33;
+array losy(33) los1 - los33;
+do i = 1 to m;
+    los = floor(RANUNI(0) * u + 1);
+    if(los > u or los < l) then i = i - 1;
+    else losy[i] = xsy[los];
+end;
+put "Iteracja " iteracja;
+do i = 1 to m;
+put losy[i];
+end;
+iteracja + 1;
+run;
+
+/* Losowanie bez zwracania. */
+
+data zad2_b;
+set lib.l04z02;
+array xsy(33) x1 - x33;
+array losy(33) los1 - los33;
+do i = 1 to m;
+    los = - 500;
+    ulos = .;
+    do while(ulos=. & (los > ulos or los < l));
+        los = floor(RANUNI(0) * u + 1);
+            vlos=ceil(33*ranuni(0));
+            ulos=xsy(vlos);
+            xsy(vlos)=.;
+        end;
+        losy(i)=ulos;
+end;
+put "Iteracja " iteracja;
+do i = 1 to m;
+put losy[i];
+end;
+iteracja + 1;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+data zad3;
+n = 5;
+array t(6, 6);
+/* Ogólnie jak chcemy wygenerować trójkąt Pascala dla n, to w definicji tablicy wpisujemy t(n + 1, n + 1).
+Nie można tu wprowadzać zmiennych, muszą to być konkretne liczby. */
+put "Otrzymany trójkąt Pascala:";
+do i = 0 to n;
+    do j = 0 to n;
+    if(j > i) then t[i + 1, j + 1] = 0;
+    if(i = 0 or j = 0 or j = i) then t[i + 1, j + 1] = 1;
+    isilnia = 1;
+    do iter = 1 to i; /* Liczymy i!, j!, (i - j)!. */
+        isilnia = isilnia * iter;
+    end;
+    jsilnia = 1;
+    do iter = 1 to j;
+        jsilnia = jsilnia * iter;
+    end;
+    iminjsil = 1;
+    do iter = 1 to (i - j);
+        iminjsil = iminjsil * iter;
+    end;
+    t[i + 1, j + 1] = isilnia / (jsilnia * iminjsil);
+    if(j <= i) then put t[i + 1, j + 1] @;
+    end;
+    put " ";
+end;
+run;
+/* W logu widzimy otrzymany trójkąt Pascala. */
+
+/*zadanie 4****************************************************************;*/
+
+data l04z04;
+array z(1600) z1-z1600;
+do i = 1 to 1600;
+    z[i] = 2 * RANUNI(0) - 1;
+end;
+run;
+
+data l04z04_kwadrat;
+set l04z04;
+array z(3200) z1-z1600 z:;
+array kw(40, 40);
+do i = 1 to 40;
+    do j = 1 to 40;
+        kw[i, j] = z[40 * (i - 1) + j];
+    end;
+end;
+run;
+
+data l04z04_kwadrat_z_bd;
+set l04z04_kwadrat;
+array idx_bd(1600);
+do i = 1 to 1600;
+    idx_bd(i) = i;
+end;
+array los(52);
+array kw(40, 40) kw:;
+do i = 1 to 52;
+    u = .;
+    do while(u = .); /* Losuję bez zwracania indeksy, dla których wartości w kwadracie będą zastąpione brakami danych. */
+        v=ceil(1600 * ranuni(0));
+        u=idx_bd(v);
+        idx_bd(v)=.;
+        end;
+        los(i)=u;
+    wsp_kw_i = ceil(los(i) / 40);
+    wsp_kw_j = los(i) - (wsp_kw_i - 1) * 40;
+    kw[wsp_kw_i, wsp_kw_j] = .;
+end;
+run;
+
+/*zadanie 5****************************************************************;*/
+
+data l04z05_ord;
+set lib.l04z02;
+array x(66) x1-x33 x:;
+/* Dla każdego wiersza zmienne x1, ..., x33 sortujemy rosnąco za pomocą sortowania bąbelkowego. */
+do i = 33 to 2 by -1;
+    do j = 1 to i - 1;
+        if(x[j] > x[j + 1]) then
+        do;
+            a = x[j + 1];
+            x[j + 1] = x[j];
+            x[j] = a;
+        end;
+    end;
+end;
+keep x:;
+run;
+
+/*zadanie 6****************************************************************;*/
+
+data zad6;
+    array odsz_l[14] $;
+    array kod_do_l[7] $;
+    array data_tab[3] $;
+    length zap_licz $ 14;
+    length data_sas $ 10;
+    zap_licz = "";
+    data_sas = "";
+    set lib.l04z06;
+    /* Przekształcam zmienną liczba do zmiennej numerycznej przy pomocy zmiennej "kod". */
+    do i = 1 to dim(odsz_l);
+        odsz_l[i] = substr(liczba, i, 1);
+    end;
+    do i = 1 to dim(kod_do_l);
+        kod_do_l[i] = substr(kod, i, 1);
+    end;
+    do i = 1 to dim(odsz_l);
+        if kod_do_l[1] = 'W' then
+        do; /* Jeśli w pierwszym znaku wartości zmiennej "kod" jest litera 'W'
+               oraz ten znak w zaszyfrowanej liczbie to 'W', to do tego znaku w liczbie przypisujemy
+               wartość ze zmiennej "kod" odpowiadającą literze 'W', czyli 3 znak ze zmiennej "kod".
+               A, gdy znak w liczbie to 'P', to bierzemy 7 znak ze zmiennej "kod". */
+            if(odsz_l[i] = 'W') then odsz_l[i] = kod_do_l[3];
+            else if (odsz_l[i] = 'P') then odsz_l[i] = kod_do_l[7];
+        end;
+        else
+        do; /* W przeciwnym przypadku, czyli, gdy pierwszy znak w zmiennej "kod" to 'P',
+               to robimy analogicznie, tylko bierzemy znaki ze zmiennej "kod" w odwrotny sposób. */
+            if(odsz_l[i] = 'W') then odsz_l[i] = kod_do_l[7];
+            else if (odsz_l[i] = 'P') then odsz_l[i] = kod_do_l[3];
+        end;
+        zap_licz = strip(zap_licz) || strip(odsz_l[i]);
+    end;
+
+    /* Zmienną "data" zamieniam na datę sasową. */
+    do i = 1 to 3;
+        data_tab[i] = scan(data, i);
+        if (length(data_tab[i]) = 1) then data_tab[i] = strip('0') || strip(data_tab[i]);
+        /* Jeśli rok, miesiąc, czy dzień ma długość jeden, to jest dniem 1 lub 2 ... lub 9, czyli przed liczbą wstawiamy 0. */
+    end;
+    data_sas = strip(data_sas) || strip(data_tab[3]) || strip('.') || strip(data_tab[1]) || strip('.') || strip(data_tab[2]);
+
+    keep zap_licz liczba kod data data_sas;
+run;
+
+/*zadanie 7****************************************************************;*/
+
+data zad7;
+set lib.l04z07;
+array b(22) b0 - b10 b:;
+do i = 1 to 11;
+    wynik + (2 ** (11 - i)) * b[i];
+end;
+output;
+wynik = 0;
+drop i;
+run;
+
+/*zadanie 8****************************************************************;*/
+
+data srednie;
+set lib.l04z08 end = koniec;
+array x(6) x1-numeric-x6;
+array a(6) a1-character-a6;
+array avgx2wym(6, 9) (54 * 0);
+array klasa(6) klasa1 - klasa6 (6*1);
+array xsuma(6) (6*0); /* To będzie suma wszystkich x-sów w grupie. */
+array i(6) (6*0); /* Wykorzystam to jako licznik elementów w grupie. */
+do j = 1 to 6;
+    xsuma[j] + x[j];
+    i[j] + 1;
+    if((lag(a[j]) ^= a[j]) and (_n_ > 1)) then /* Sprawdzam, czy dla zmiennej aj jest nowa grupa. */
+    do; /* Jeżeli jest nowa grupa, to liczę średnią dla j-tej zmiennej w starej grupie. */
+        avgx2wym[j, klasa[j]] = (xsuma[j] - x[j]) / (i[j] - 1);
+        xsuma[j] = x[j];
+        i[j] = 1;
+        klasa[j] + 1;
+    end;
+end;
+if koniec then
+do;
+    do j = 1 to 6;
+        avgx2wym[j, klasa[j]] = xsuma[j] / i[j];
+    end;
+    output;
+end;
+keep avgx2wym:;
+run;
+
+/* Porządkuję wartości avgx_1, ...avgx_6, by mieć postać zbioru jak w zbiorze l04z08_avg. */
+data lib.l04z08_avg;
+set srednie;
+array avgx2wym[6, 9] _all_;
+array avgx(6);
+do i = 1 to 9;
+    do j = 1 to 6;
+        avgx[j] = avgx2wym[j, i];
+    end;
+    output;
+end;
+drop avgx2wym:;
+keep avgx:;
+run;
+
+/*zadanie 9****************************************************************;*/
+
+data zad9;
+set lib.l04z02;
+array xsy(66) x1-x33 x:;
+put l;
+put m;
+put u;
+srednia = (xsy[l] + xsy[m] + xsy[u])/3;
+output;
+run;
+
+/*zadanie 10***************************************************************;*/
+
+data l04z10_poz;
+set lib.l04z10;
+array ry(10) r1-r5 r:;
+do i = 1 to 5;
+    if(ry[i] = .) then
+    do;
+    wiersz = x;
+    kolumna = i;
+    output;
+    end;
+end;
+x + 1;
+retain x 1;
+drop r1 - r5 i x;
+run;
+
+/*zadanie 11***************************************************************;*/
+
+/* a) */
+
+data zad11_a;
+set lib.l04z11 end = koniec;
+array przel[31] $ switch1 - switch31;
+do i = 1 to dim(przel);
+    do j = 1 to length(przel[i]);
+        /* Sprawdzam j - ty znak w zmiennej switch_i */
+        if(substr(przel[i], j, 1) = 'v') then l_sprawn + 1;
+        else if (substr(przel[i], j, 1) = 'x') then l_nieczyn + 1;
+        else if (substr(przel[i], j, 1) = 'o') then l_nieuzyw + 1;
+    end;
+end;
+if(koniec) then output;
+keep l_sprawn l_nieczyn l_nieuzyw;
+run;
+
+/* b) */
+
+/* Robię prawie tak samo, jak w a), tylko, że zeruję zmiennę: "sprawn", "nieczyn", "nieuzyw",
+   gdyż liczymy sprawne, nieczynne, nie używane porty dla poszczególnych serwerów, a nie dla
+   wszystkich portów z całego zbioru. Ponadto wykonuję output w każdej iteracji,
+   gdyż dla każdego serwera szukamy tych 3 wartości. */
+
+data zad11_b;
+set lib.l04z11;
+array przel[31] $ switch1 - switch31;
+do i = 1 to dim(przel);
+    do j = 1 to length(przel[i]);
+        /* Sprawdzam j - ty znak w zmiennej switch_i */
+        if(substr(przel[i], j, 1) = 'v') then l_sprawn + 1;
+        else if (substr(przel[i], j, 1) = 'x') then l_nieczyn + 1;
+        else if (substr(przel[i], j, 1) = 'o') then l_nieuzyw + 1;
+    end;
+end;
+output;
+l_sprawn = 0;
+l_nieczyn = 0;
+l_nieuzyw = 0;
+keep server_name l_sprawn l_nieczyn l_nieuzyw;
+run;
+
+/* c) */
+
+/* Sprawnością serwera jest: (liczba sprawnych gniazd) / (liczba wszystkich gniazd). */
+
+/* Skorzystam z wyników otrzymanych w podpunkcie b). */
+data zad11_c;
+set zad11_b;
+sprawnosc = l_sprawn / (l_sprawn + l_nieczyn + l_nieuzyw);
+run;
+
+/* Szukam największej oraz najmniejszej sprawności. */
+proc means data = zad11_c max min;
+var sprawnosc;
+output out = zad11_c_maks_min(drop = _type_ _freq_) max = najw_sprawn min = najmn_sprawn;
+run;
+
+/* Dodałem zmienną "poz_sprawn", żeby było dobrze widać, który serwer ma
+   najwyższą sprawność, a który najniższą. */
+data zad11_c_wynik;
+    set zad11_c;
+    if 1 then
+    do;
+        do i = 1;
+            set zad11_c_maks_min point = i;
+            length poz_sprawn $11;
+            if(sprawnosc = najw_sprawn) then
+            do;
+                poz_sprawn = "Najwyższa";
+                output;
+            end;
+            if(sprawnosc = najmn_sprawn) then
+            do;
+                poz_sprawn = "Najniższa";
+                output;
+            end;
+        end;
+    end;
+keep poz_sprawn server_name sprawnosc;
+run;
+
+/* d) */
+
+/* Zakładam, że przełącznik jest częściej używany, im większą ma częstość używania,
+   gdzie (częstość używania) = 1 - (liczba nieużywanych gniazd) / (liczba wszystkich gniazd). */
+
+data zad11_d;
+    set lib.l04z11 end = koniec;
+    array przel[31] $ switch1 - switch31;
+    array czest_uzyw[31] czest_switch1 - czest_switch31;
+    do i = 1 to dim(przel);
+        do j = 1 to length(przel[i]);
+            if(substr(przel[i], j, 1) = 'v') then l_sprawn + 1;
+            else if (substr(przel[i], j, 1) = 'x') then l_nieczyn + 1;
+            else if (substr(przel[i], j, 1) = 'o') then l_nieuzyw + 1;
+        end;
+        czest_uzyw[i] = 1 - (l_nieuzyw) / (l_nieuzyw + l_nieczyn + l_sprawn);
+    end;
+    keep czest_switch1 - czest_switch31;
+run;
+
+/* Dla każdego przełącznika liczę średnią z częstości używania spośród wszystkich serwerów. */
+
+proc means data = zad11_d mean;
+var czest_switch1 - czest_switch31;
+output out = zad11_d_stat(drop = _type_ _freq_);
+run;
+
+data zad11_d_srednie;
+set zad11_d_stat;
+if (_STAT_ = 'MEAN') then output;
+drop _STAT_;
+run;
+
+/* Stransponuję, by policzyć maksimum i minimum z częstości spośród wszystkich przełączników. */
+proc transpose data = zad11_d_srednie out = zad11_d_odp (drop = _NAME_);
+run;
+
+proc means data = zad11_d_odp max min;
+var COL1;
+output out = zad11_d_maks_min(drop = _type_ _freq_) max = najcz_uzyw min = najrz_uzyw;
+run;
+
+/* Analogicznie jak w c), dodałem zmienną "jak_czesto", by wyraźnie było widać, który typ przełącznika
+   jest najrzadziej używany, a który najczęściej. */
+data zad11_d_wynik;
+    set zad11_d_odp (rename = (COL1 = czest_uzyw));
+    if 1 then
+    do;
+        do i = 1;
+            set zad11_d_maks_min point = i;
+            length jak_czesto $20;
+            if(czest_uzyw = najrz_uzyw) then
+            do;
+                ktory_przelacznik = _N_;
+                jak_czesto = "Najrzadziej";
+                output;
+            end;
+            if(czest_uzyw = najcz_uzyw) then
+            do;
+                ktory_przelacznik = _N_;
+                jak_czesto = "Najczęściej";
+                output;
+            end;
+        end;
+    end;
+keep ktory_przelacznik jak_czesto czest_uzyw;
+run;

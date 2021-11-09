@@ -1,0 +1,316 @@
+/* 
+LABORATORIUM NR: 11
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7 (wszystkie)
+UWAGI:
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_10';
+
+/*zadanie 1****************************************************************;*/
+
+%macro dane_o_wypozyczeniu(nr_wyp);
+
+data wyp;
+set lib.l09z01_wypozyczenia;
+run;
+
+data prac;
+set lib.l09z01_pracownicy;
+run;
+
+data sam;
+set lib.l09z01_samochody;
+run;
+
+data wyp_prac_sam;
+set wyp;
+merge prac sam;
+
+
+if(nr_wypozyczenia = &nr_wyp) then
+do;
+	output;
+end;
+
+
+drop nr_wypozyczenia nr_klienta nr_samochodu nr_pracow_wyp nr_pracow_odd nr_miejsca_wyp nr_miejsca_odd data_wyp data_odd kaucja cena_jedn nr_pracownika data_zatr dzial stanowisko pensja dodatek nr_miejsca nr_telefonu rok_prod kolor poj_silnika przebieg;
+
+run;
+
+%mend dane_o_wypozyczeniu;
+
+options mprint;
+%dane_o_wypozyczeniu(00000001);
+
+/*zadanie 2****************************************************************;*/
+
+%macro srednia_sales_maly;
+
+%do i = 1 %to 102;
+	%global zmienna_maly&i;
+%end;
+
+data id_maly;
+set lib.l08z02_maly (rename = (id = x_maly));
+%let i = _N_;
+%let zmienna_maly&i = x_maly;
+run;
+
+data id_w_duzym;
+set lib.l08z02_duzy;
+%do i=1 %to 102;
+%if id = &&zmienna_maly&i %then output;
+%end;
+run;
+
+proc sql;
+select avg(sales) as srednia
+from id_w_duzym
+;
+quit;
+
+%mend srednia_sales_maly;
+
+options mprint;
+%srednia_sales_maly;
+
+/*zadanie 3****************************************************************;*/
+
+%macro dziel_zbior(zbior, n);
+	proc sql noprint;
+	select count(*) into: ile_obs from &zbior;
+	quit;
+	%let suma_wyk_obs = 0; /* Jest to suma wszystkich użytych obserwacji. */
+	%let nr_zbioru = 1; /* Tą zmienną ponumeruję kolejne zbiory. */
+	%do %while (&suma_wyk_obs < &ile_obs); /* Dopóki suma liczb obserwacji ze wszystkich zbiorów nie przekroczy
+	liczb obserwacji ze zbioru wyjściowego, to tworzymy nowe zbiory o liczbie mniejszej, bądź równej n. */
+		%let ile_obs_wrz= %sysevalf(1+ %eval(&n-1)*%sysfunc(ranuni(0)),integer); 
+		/* Jest to ilość obserwacji, które chcemy wrzucić do aktualnie tworzonego zbioru. */
+		%if %eval(&suma_wyk_obs + &ile_obs_wrz) <= &ile_obs %then %do;
+			data zbior&nr_zbioru;
+			do kolej_k_obs = %eval(&suma_wyk_obs + 1) to %eval(&suma_wyk_obs + &ile_obs_wrz);
+				set &zbior point = kolej_k_obs;
+				output;
+			end;
+			stop;
+			run;
+			%let suma_wyk_obs = %eval(&suma_wyk_obs + &ile_obs_wrz);
+			%let nr_zbioru = %eval(&nr_zbioru + 1);
+		%end;
+		%else %if %eval(&suma_wyk_obs + &ile_obs_wrz) > &ile_obs %then %do;
+		/* Jeśli po wylosowaniu ile_obs_wrz przekraczamy liczbę wszystkich obserwacji ze zbioru wejściowego,
+		   to nieużyte zmienne wrzucamy do zbioru. */
+			data zbior&nr_zbioru;
+			do kolej_obs = %eval(&suma_wyk_obs + 1) to &ile_obs;
+				set &zbior point = kolej_obs;
+				output;
+			end;
+			stop;
+			run;
+		%end;
+	%end;	
+%mend dziel_zbior;
+
+data zbior_test;
+do i = 1 to 20;
+	x = i;
+	output;
+end;
+drop i;	
+run;
+
+options mprint;
+%dziel_zbior(zbior_test, 3);
+
+/*zadanie 4****************************************************************;*/
+
+%macro najb_akt_wart_x(id, zbiory);
+
+%let i = 1;
+%let slowo = %sysfunc(scan(&zbiory, &i, %str( )));
+
+data krok1;
+
+%do %while(&slowo ne);
+	merge &slowo (rename = (id = id&i x = x&i date = date&i));
+	%let i=%eval(&i+1);
+	%let slowo=%sysfunc(scan(&zbiory,&i, %str( )));
+%end;
+
+%let dl = %eval(&i - 1);
+	
+array id(&dl) id:;
+array x(&dl) x:;
+array date(&dl) date:;
+
+if(id[1] = &id) then maxdate = date[1];
+
+%do iter = 1 %to &dl;
+	if (date[&iter] >= maxdate & id[&iter] = &id) then 
+	do;
+		maxdate = date[&iter];
+		idx = &iter;
+	end;		
+%end;
+
+if(maxdate = .) then put "Tego id nie ma w żadnym zbiorze.";
+else put "Najbardziej aktualna wartość zmiennej x to" x[idx];
+
+run;
+
+%mend najb_akt_wart_x;
+
+data zbior_test_1;
+	id = 000001; x = 3; date = "01/02/1990"; output;
+	id = 000002; x = 4; date = "04/15/1995"; output;
+	id = 000003; x = 1; date = "05/23/1995"; output;
+	id = 000004; x = 4; date = "01/01/1998"; output;
+run;
+
+data zbior_test_2;
+	id = 000001; x = 23; date = "01/02/2000"; output;
+	id = 000002; x = 43; date = "04/15/1992"; output;
+	id = 000003; x = 13; date = "05/23/1990"; output;
+	id = 000004; x = 1324; date = "01/01/1999"; output;
+run;
+
+data zbior_test_3;
+	id = 000001; x = 234; date = "01/02/1992"; output;
+	id = 000002; x = 47; date = "04/15/1994"; output;
+	id = 000003; x = 34; date = "05/23/2005"; output;
+	id = 000004; x = 45; date = "01/01/1994"; output;
+run;
+
+options mprint;
+%najb_akt_wart_x(000001, zbior_test_1 zbior_test_2 zbior_test_3);
+
+/*zadanie 5****************************************************************;*/
+
+%macro format_zmienna(zbior, zm_num, ile_obs);
+
+proc sort data = &zbior out = zbior_posort_zm_num;
+by &zm_num;
+run;
+
+data zbior_posort_zm_num_ren;
+set zbior_posort_zm_num (rename = (&zm_num = posort_zm));
+run;
+
+
+data zbior_makro;
+set &zbior;
+merge zbior_posort_zm_num_ren;
+array format(&ile_obs);
+array zm _NUMERIC_;
+
+%let wym = dim(zm);
+
+%do i = 1 %to &ile_obs;
+	set zbior_posort_zm_num_ren (rename = (posort_zm = zmien&i)) point = &i;
+%end;
+
+%do i = 1 %to &wym;
+	if(zm[&i] <= zmien1) then zm[&i] = "1";
+	%do j = 2 %to &ile_obs;
+		%let pj = %eval(&j - 1);
+		if(zmien&pj < zm[&j] <= zmien&j) then zm[&j] = "&j";
+	%end;
+%end;
+
+run;
+
+%mend format_zmienna;
+
+data zbior_test;
+x = 1; y = 1.5; output;
+x = 0; y = 0.6; output;
+x = 2; y = 0; output;
+x = -1; y = 2; output;
+x = 3; y = 7; output;
+x = 4; y = -0.5; output;
+run;
+
+options mprint;
+%format_zmienna(zbior_test, x, 6);
+
+/*zadanie 6****************************************************************;*/
+
+%macro zbior_bez_bd(zbior);
+	
+	data zm_tekst;
+	set &zbior (keep = _character_);
+	run;
+	
+	proc transpose data = &zbior(keep = _numeric_) out = &zbior.2;
+	run;
+	
+	data &zbior.2;
+ 		 set &zbior.2;
+  		if cmiss(of _ALL_)=0;  /* Funkcja cmiss sprawdza ilość braków danych w zbiorze. */
+	run;
+	
+	proc transpose data = &zbior.2 out = &zbior.2 (drop=_name_) ;
+	run;	
+	
+	data &zbior.2;
+		merge &zbior.2 zm_tekst;
+	run;
+%mend zbior_bez_bd;
+
+/* &zbior.2 jest zbiorem wynikowym. */
+
+data zbior_test;
+x = 2; y = 4; z = 54; a = "kolokwium"; output;
+x = .; y = .; z = 244; a = "sesja"; output;
+x = .; y = 3; z = 35; a = "egzamin"; output;
+x = 12; y = 45; z = 643; a = "SAS"; output;
+run;
+
+options mprint;
+%zbior_bez_bd(zbior_test);
+
+/*zadanie 7****************************************************************;*/
+
+%macro dystr_emp(zbior, x, n);
+
+data licz_dystr;
+set &zbior end = koniec;
+min = &x;
+max = &x;
+if(_N_ > 1) then
+do;
+	if(&x >= max) then max = &x;
+	if(&x <= min) then min = &x;
+		
+end;
+
+if(koniec) then
+do;
+	do i = 1 to &n;
+		pkt = (max / &n) * i;
+		dystr = i / &n;
+		output;
+	end;
+end;
+
+drop &x min max i;
+run;
+
+%mend dystr_emp;
+
+data zbior_test;
+	x = 1; output;
+	x = 0.4; output;
+	x = 2.1; output;
+	x = 6; output;
+	x = 4.7; output;
+	x = 7; output;
+run;
+
+options mprint;
+%dystr_emp(zbior_test, x, 6);
+
+/*KONIEC*******************************************************************;*/

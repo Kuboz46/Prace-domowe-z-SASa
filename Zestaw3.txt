@@ -1,0 +1,794 @@
+/*
+LABORATORIUM NR: 3
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7 (wszystkie)
+UWAGI: Brak
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_2'; /* U mnie w folderze Praca_domowa_2 są wszystkie pliki, które podano do zestawu trzeciego. */
+
+/*zadanie 1****************************************************************;*/
+
+/* a) */
+
+data zad1_a;
+set lib.l03z01;
+sumay = sumay + y;
+i + 1;
+sredniay = sumay / i; /* Tu jest liczona średnia ze zmiennej y w danej grupie. */
+if(x ^= lag(x) & lag(y) > - 1e6) then
+do;
+xl = lag(x);
+put 'Średnia ze zmiennej y w grupie ' xl 'wynosi: ' sredniay = '.' ; /* W Logu jest podana średnia. */
+output;
+sredniay = 0;
+i = 1;
+end;
+retain sumay 0 i 1;
+drop sumay i xl;
+run;
+
+/* b) */
+
+data zad1_b;
+set lib.l03z01;
+by x;
+sumay + y;
+i + 1;
+put sumay = ;
+if(last.x = 1) then
+do;
+sredniay = sumay / i; /* Tu jest liczona średnia ze zmiennej y w danej grupie. */
+sumay = 0;
+i = 1;
+output;
+end;
+drop sumay i;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+
+/* Generowanie obserwacji i przyporządkowywanie obserwacji do odpowiednich warstw. */
+
+data zbior;
+do i = 1 to 50000;
+    obs = 120 * RANUNI(i);
+    if (obs >= 0 & obs <= 20) then warstwa = 'A';
+    if (obs > 20 & obs <= 40) then warstwa = 'B';
+    if (obs > 40 & obs <= 60) then warstwa = 'C';
+    if (obs > 60 & obs <= 80) then warstwa = 'D';
+    if (obs > 80 & obs <= 100) then warstwa = 'E';
+    if (obs > 100 & obs <= 120) then warstwa = 'F';
+    output;
+end;
+run;
+
+/* Sortowanie zbioru względem zmiennych warstwa i obs. */
+
+proc sort data = zbior out = zbiornowy;
+    by warstwa obs;
+run;
+
+data zad2;
+set zbiornowy;
+by warstwa;
+i + 1;
+if(first.warstwa = 1) then
+do;
+minimum = obs; /* b) */
+retain minimum;
+i = 1;
+end;
+if(last.warstwa = 1) then
+do;
+minimum = minimum;
+maximum = obs; /* a) */
+liczbaobserwacji = i; /* c) */
+output;
+i = 1;
+end;
+run;
+
+/* W zbiorze zad2 jest maksimum, minimum i liczba obserwacji. */
+
+/*zadanie 3****************************************************************;*/
+
+data zbior;
+set lib.l03z03;
+i + 1;
+grp = j;
+if (i / 12 = 1) then
+do;
+    j + 1;
+    i = 0;
+end;
+retain j 1;
+drop i j;
+run;
+
+data zad3;
+set zbior;
+by grp;
+if (last.grp = 1) then
+do;
+maks = x;
+output;
+end;
+run;
+
+/*zadanie 4****************************************************************;*/
+
+/* alpha */
+
+/* W zbiorze L03z04 widzimy, że wszystkie możliwe liczby to 0, 1, 2, ..., 9. */
+
+
+/* Sprawdzamy oddzielnie dla każdej liczby, w ilu grupach dana liczba występuje. */
+
+
+/* 0. Sprawdzamy, w ilu grupach jest zero. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 0 & litera ^= y) then
+do;
+ilezer + 1; /* Ta zmienna mówi, w ilu grupach jest zero w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że zero jest w 5 grupach. */
+
+/* 1. Sprawdzamy, w ilu grupach jest jeden. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 1& litera ^= y) then
+do;
+ilejedynek + 1; /* Ta zmienna mówi, w ilu grupach jest jeden w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że jeden jest w 3 grupach. */
+
+
+/* 2. Sprawdzamy, w ilu grupach jest dwa. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 2 & litera ^= y) then
+do;
+iledwojek + 1; /* Ta zmienna mówi, w ilu grupach jest dwa w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że dwa jest w 3 grupach. */
+
+
+/* 3. Sprawdzamy, w ilu grupach jest trójka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 3 & litera ^= y) then
+do;
+iletrojek + 1; /* Ta zmienna mówi, w ilu grupach jest trójka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że trójka jest w 3 grupach. */
+
+
+/* 4. Sprawdzamy, w ilu grupach jest czwórka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 4 & litera ^= y) then
+do;
+ileczworek + 1; /* Ta zmienna mówi, w ilu grupach jest czwórka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że czwórka jest w 2 grupach. */
+
+
+/* 5. Sprawdzamy, w ilu grupach jest piątka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 5 & litera ^= y) then
+do;
+ilepiatek + 1; /* Ta zmienna mówi, w ilu grupach jest piątka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że piątka jest w 6 grupach. */
+
+
+/* 6. Sprawdzamy, w ilu grupach jest szóstka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 6 & litera ^= y) then
+do;
+ileszostek + 1; /* Ta zmienna mówi, w ilu grupach jest szóstka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że szóstka jest w 4 grupach. */
+
+
+/* 7. Sprawdzamy, w ilu grupach jest siódemka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 7 & litera ^= y) then
+do;
+ilesiodemek + 1; /* Ta zmienna mówi, w ilu grupach jest siódemka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że siódemka jest w 4 grupach. */
+
+
+/* 8. Sprawdzamy, w ilu grupach jest ósemka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 8 & litera ^= y) then
+do;
+ileosemek + 1; /* Ta zmienna mówi, w ilu grupach jest ósemka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że ósemka jest w 5 grupach. */
+
+/* 9. Sprawdzamy, w ilu grupach jest dziewiątka. */
+data zad4_alpha;
+set lib.l03z04;
+
+
+if (liczba = 9 & litera ^= y) then
+do;
+iledziewiatek + 1; /* Ta zmienna mówi, w ilu grupach jest dziewiątka w zbiorze L03z04. */
+y = litera;
+output;
+end;
+
+retain y 'z';
+
+run;
+
+/* Z danych wynikowych widzimy, że dziewiątka jest w 3 grupach. */
+
+
+/* Zatem wybranymi wartościami są: 0, 5, 6, 7, 8. */
+
+/* beta */
+
+data zad3;
+set lib.l03z04;
+by litera;
+i + 1;
+if(last.litera = 1) then
+do;
+dlugosc = i;
+output;
+i = 1;
+end;
+run;
+
+proc means data = zad3 max;
+var dlugosc;
+run;
+
+/* Maksymalna długość grupy to 11. */
+
+
+/* Sprawdzamy, która grupa jest najdłuższa. */
+
+data zad3;
+set lib.l03z04;
+by litera;
+i + 1;
+if(last.litera = 1) then
+do;
+if(i = 11)
+then
+do;
+szukanagrupa = litera;
+output;
+end;
+i = 1;
+end;
+run;
+
+/* Zatem najdłuższa grupa to i. */
+
+data zad3;
+set lib.l03z04;
+if(litera = 'i') then
+do;
+x = liczba;
+output;
+end;
+run;
+
+/* Stąd wartości zmiennej liczba, które występują w największej grupie, to 0, 3, 5, 7, 8.
+
+/* gamma */
+
+/* Tworzę zmodyfikowany zbiór l03z04 tak, aby mieć dla każdej litery maksymalnie 5 pierwszych obserwacji. */
+data zad3_do5_pier_wart;
+set lib.l03z04;
+by litera;
+ile_wart + 1;
+
+if(ile_wart <= 5) then output;
+
+if(last.litera = 1) then ile_wart = 0;
+
+retain ile_wart 0;
+
+drop ile_wart;
+
+run;
+
+data zad3;
+set zad3_do5_pier_wart;
+by litera;
+
+sumaliczb + liczba;
+i + 1;
+if(last.litera = 1) then
+do;
+srednia = sumaliczb / i;
+output;
+i = 0;
+sumaliczb = 0;
+
+end;
+retain i 0 sumaliczb 0;
+drop liczba sumaliczb i;
+run;
+
+/* delta */
+
+data zad3;
+set lib.l03z04;
+by litera;
+ile_wart + 1;
+
+suma_liczb + liczba;
+
+if(last.litera = 1) then
+do;
+
+    if(ile_wart >= 5) then
+    do;
+        p1 = _N_ - 1;
+        p2 = _N_ - 2;
+        p3 = _N_ - 3;
+        p4 = _N_ - 4;
+        set lib.l03z04 (rename = (liczba = xl1)) point = p1;
+        set lib.l03z04 (rename = (liczba = xl2)) point = p2;
+        set lib.l03z04 (rename = (liczba = xl3)) point = p3;
+        set lib.l03z04 (rename = (liczba = xl4)) point = p4;
+        srednia = (liczba + xl1 + xl2 + xl3 + xl4)/5;
+        output;
+        suma_liczb = 0;
+        ile_wart = 0;
+
+    end;
+    else
+    do;
+        srednia = suma_liczb / ile_wart;
+        output;
+        suma_liczb = 0;
+        ile_wart = 0;
+    end;
+
+
+end;
+retain ile_wart 0 suma_liczb 0;
+drop suma_liczb liczba ile_wart xl1 - xl4;
+run;
+
+/* epsilon */
+
+/* Widzimy w zbiorze, że wszystkie litery to a, b, c, .... j . */
+
+data zad3;
+set lib.l03z04;
+by litera;
+
+
+if(liczba = 0) then
+do;
+czyjest0 + 1;
+end;
+if(liczba = 9) then
+do;
+czyjest9 + 1;
+end;
+if(last.litera = 1 & czyjest0 = 0 & czyjest9 = 0) then
+do;
+    lit = litera;
+    output;
+end;
+if(last.litera = 1) then
+do;
+czyjest0 = 0;
+czyjest9 = 0;
+end;
+retain czyjest0 0 czyjest9 0;
+run;
+
+/* Zatem grupy, w których nie ma liczby ani 0, ani 9, to d, e, j. */
+
+/* dzeta */
+
+data zad3;
+set lib.l03z04;
+run;
+
+proc sort data = zad3 out = zbior_posort;
+by litera liczba;
+run;
+
+/* Sprawdzam, ile jest w każdej grupie wartości występujących więcej niż 1 raz. */
+
+data licz_powt;
+set zbior_posort;
+by litera liczba;
+ile_liczba + 1;
+if(last.liczba = 1) then
+do;
+    if(ile_liczba >= 2) then
+    do;
+        ile_powt + 1;
+    end;
+    ile_liczba = 0;
+end;
+if(last.litera = 1) then
+do;
+    output;
+    ile_powt = 0;
+end;
+retain ile_liczba 0 ile_powt 0;
+drop liczba ile_liczba;
+run;
+
+proc sort data = licz_powt out = licz_powt_posort;
+by ile_powt;
+run;
+
+data wynik;
+set licz_powt_posort nobs = ile_obs;
+set licz_powt_posort (rename = (ile_powt = max_ile_powt)) point= ile_obs;
+if(ile_powt = max_ile_powt) then output;
+drop ile_powt;
+run;
+
+/* Czyli litery, które zawierają najwięcej powtarzających się wartości to: "i". */
+
+/*zadanie 5****************************************************************;*/
+
+/* Funkcja jest to odwzorowanie ze zbioru X w zbiór Y, gdzie dla każdego argumenty x ze zbioru X przyjmuje dokładnie jeden element ze zbioru Y */
+
+/* Jeżeli dane odwzorowanie dla pewnego argumentu przyjmuje przynajmniej 2 różne wartości, to to odwzorowanie nie jest funkcją. */
+
+
+data zbior;
+set lib.l03z05;
+run;
+
+proc sort data = zbior out = nowyzbior;
+    by grupa argument;
+run;
+
+/* Sprawdzamy, jakie są wszystkie odwzorowania. */
+
+data zbior2;
+set nowyzbior;
+by grupa;
+if(last.grupa = 1) then output;
+drop argument wartosc;
+run;
+
+/* Wszystkie odwzorowania to są więc f(x), g(x), h(x). */
+
+
+/* Sprawdzamy, które odwzorowania nie są funkcjami. */
+
+data zad5;
+set nowyzbior;
+if(argument = lag(argument) & wartosc ^= lag(wartosc)) then put "Odwzorowanie " grupa " nie jest funkcją.";
+run;
+
+/* Z Loga widzimy, że odwzorowanie g(x) nie jest funkcją. */
+
+
+/* Zatem w grupach f(x), h(x), pary (argument, wartosc) definiują funkcję. */
+
+/*zadanie 6****************************************************************;*/
+
+/* a) */
+
+data zbior;
+set lib.l03z06;
+run;
+
+proc sort data = zbior out = nowyzbior;
+by plec partia;
+run;
+
+data zad6_a;
+set nowyzbior;
+by plec partia;
+sumapop + p;
+i + 1;
+
+if(last.partia = 1) then
+do;
+sredniapop = sumapop / i; /* Średnia poparcia */
+output;
+sumapop = 0;
+i = 0;
+end;
+retain sumapop 0 i 0;
+drop sumapop i p;
+run;
+
+
+/* b) */
+
+proc sort data = zbior out = nowyzbior2; /* Zbiór o nazwie zbior był w podpunkcie a). */
+by id;
+run;
+
+data zad6_b;
+set nowyzbior2;
+by id;
+sumapop + p;
+if(last.id = 1) then
+do;
+    if(sumapop < 100) then /* Warunek, który mówi, czy dana osoba może głosować na partię spoza zbioru {A, B, C}. */
+    do;
+        ileosob + 1;
+    end;
+    sumapop = 0;
+end;
+retain ileosob 0;
+run;
+
+proc means data = zad6_b max;
+    var ileosob;
+run;
+
+/* Maksimum ze zmiennej ileosob jest liczbą wszystkich osób, które mogły zagłosować na partię spoza zbioru {A, B, C}. */
+
+
+/* c */
+
+/* Liczymy osoby popierające koalicję AB. */
+
+data zad6_c_AB;
+set nowyzbior2;  /* nowyzbior2 był w podpunkcie b). Jest to zbiór lib.l03z06 posortowany względem id. */
+by id;
+if(partia = 'C')
+then popC = p;
+if(partia = 'A')
+then popA = p;
+if(partia = 'B')
+then popB = p;
+if(last.id = 1) then
+do;
+    if(popA + popB > popC + popB & popA + popB > popC + popA) then
+    do;
+        ileosobAB + 1;
+        output;
+        popA = 0;
+        popB = 0;
+        popC = 0;
+    end;
+end;
+retain ileosobAB 0 popA 0 popB 0 popC 0;
+run;
+
+
+proc means data = zad6_c_AB max;
+    var ileosobAB;
+run;
+
+
+
+
+/* AC */
+
+
+data zad6_c_AC;
+set nowyzbior2;  /* nowyzbior2 był w podpunkcie b). Jest to zbiór lib.l03z06 posortowany względem id. */
+by id;
+if(partia = 'C')
+then popC = p;
+if(partia = 'A')
+then popA = p;
+if(partia = 'B')
+then popB = p;
+if(last.id = 1) then
+do;
+    if(popA + popC > popB + popC & popA + popC > popB + popA) then
+    do;
+        ileosobAC + 1;
+        output;
+        popA = 0;
+        popB = 0;
+        popC = 0;
+    end;
+end;
+retain ileosobAC 0 popA 0 popB 0 popC 0;
+run;
+
+
+proc means data = zad6_c_AC max;
+    var ileosobAC;
+run;
+
+/* BC */
+
+data zad6_c_BC;
+set nowyzbior2;  /* nowyzbior2 był w podpunkcie b). Jest to zbiór lib.l03z06 posortowany względem id. */
+by id;
+if(partia = 'C')
+then popC = p;
+if(partia = 'A')
+then popA = p;
+if(partia = 'B')
+then popB = p;
+if(last.id = 1) then
+do;
+    if(popB + popC > popA + popB or popB + popC > popA + popC) then
+    do;
+        ileosobBC + 1;
+        output;
+        popA = 0;
+        popB = 0;
+        popC = 0;
+    end;
+end;
+retain ileosobBC 0 popA 0 popB 0 popC 0;
+run;
+
+
+proc means data = zad6_c_BC max;
+    var ileosobBC;
+run;
+
+
+
+/*zadanie 7****************************************************************;*/
+
+data zad7;
+set lib.l03z07;
+run;
+
+proc sort data = zad7 out = zad7_posort;
+by okr;
+run;
+
+/* i) */
+
+data zad7_a;
+set zad7_posort;
+by okr;
+if(first.okr = 1) then first_pcz = pcz;
+if(last.okr = 1) then
+do;
+    last_pcz = pcz;
+    srednia = (first_pcz + last_pcz) / 2;
+    output;
+end;
+retain first_pcz 0 last_pcz 0;
+drop pcz first_pcz last_pcz;
+run;
+
+/* ii) */
+data l03z07_bez_bd;
+set zad7_posort;
+by okr;
+if(pcz = .) then
+do;
+    set zad7_a point = nr_grupy;
+    pcz = srednia;
+end;
+if(last.okr = 1) then nr_grupy + 1;
+retain nr_grupy 1;
+run;
+
+/* Średnia poziomu czynnika Adamsa oraz zakres średnich w grupach. */
+
+data srednie_Adamsa;
+set l03z07_bez_bd nobs = ile_obs end = koniec;
+by okr;
+suma_pcz_gr + pcz;
+suma_pcz_wsz + pcz;
+ile_pcz_gr + 1;
+if(last.okr = 1) then
+do;
+    srednia_poz_czyn_gr = suma_pcz_gr / ile_pcz_gr;
+    if(nr_gr = 1) then
+    do;
+        max_avg_pcz = srednia_poz_czyn_gr;
+        min_avg_pcz = srednia_poz_czyn_gr;
+    end;
+    if(srednia_poz_czyn_gr > max_avg_pcz) then max_avg_pcz = srednia_poz_czyn_gr;
+    if(srednia_poz_czyn_gr < min_avg_pcz) then min_avg_pcz = srednia_poz_czyn_gr;
+    nr_gr + 1;
+    suma_pcz_gr = 0;
+    ile_pcz_gr = 0;
+end;
+if(koniec) then
+do;
+    srednia_poz_czyn = suma_pcz_wsz / ile_obs;
+    zakres_srednich = max_avg_pcz - min_avg_pcz;
+    output;
+end;
+retain suma_pcz_gr 0 suma_pcz_wsz 0 ile_pcz_gr 0 min_avg_pcz 0 max_avg_pcz 0 nr_gr 1;
+drop okr pcz srednia suma_pcz_gr suma_pcz_wsz ile_pcz_gr srednia_poz_czyn_gr nr_gr max_avg_pcz min_avg_pcz;
+run;

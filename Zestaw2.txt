@@ -1,0 +1,231 @@
+/*
+LABORATORIUM NR: 2
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (wszystko)
+UWAGI: Brak
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/sasuser.v94'; /* U mnie w folderze sasuser.v94 są wszystkie pliki, które podano do zestawu drugiego. */
+
+/*zadanie 1****************************************************************;*/
+
+/* Pierwsza część zadania. */
+
+data zad1_a;
+drop n_obs i;
+n_obs = floor(10 + 100 * RANUNI(123));
+do i = 1 to n_obs;
+    x = rand('UNIFORM', -1, 1);
+    y = rand('NORMAL', 3, 1);
+    output;
+end;
+run;
+
+/* Druga część zadania. */
+
+proc means data = Work.zad1_a min mean max;
+    var x y;
+run;
+
+/* Trzecia część zadania. */
+
+data zad1_b;
+set zad1;
+min = x >< y;
+max = x <> y;
+srednia = (x + y)/2;
+output;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+data zad2;
+drop i;
+set lib.l02z02;
+do i = 1 to x;
+output;
+end;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+data zad3;
+set lib.l02z03;
+if x ^= lag(x) then kty_wyn_od_najw + 1;
+run;
+
+/*zadanie 4****************************************************************;*/
+
+data zad4;
+set lib.l02z04;
+do;
+if index > lag(index) & lag(index) >= 0 then wzrosty + 1;
+if index < lag(index) then spadki + 1;
+end;
+
+proc means data = Work.zad4 max;
+    var wzrosty spadki; /* Maksimum ze zmiennej wzrosty jest liczbą wzrostów wartości zmiennej index,
+    natomiast maksimum ze zmiennej spadki jest liczbą spadków wartości zmiennej index. */
+run;
+
+/*zadanie 5****************************************************************;*/
+
+/* Plik k1.txt */
+
+data zad5_1;
+put v1 = v2 = v3 = ;
+set lib.l02z05;
+put v1 = v2 = v3 =;
+v3 = v1 + v2;
+retain v3;
+run;
+
+/* Plik k2.txt */
+
+data zad5_2;
+put v1 = v2 = v3 = v4 = ;
+set lib.l02z05;
+v3 = v1 + v2;
+v4 = v3;
+put v1 = v2 = v3 = v4 = ;
+retain v3;
+run;
+
+/* Plik k3.txt */
+
+data zad5_3;
+v4 = v1 + v2;
+put v1 = v2 = v3 = v4 = ;
+v3 = v4;
+put v1 = v2 = v3 = v4 = ;
+retain v4;
+set lib.l02z05;
+run;
+
+/*zadanie 6****************************************************************;*/
+
+data zad6;
+set lib.l02z04;
+if dif(index) < 0 & dif(lag(index)) > 0 then maxlok + 1;
+output;
+
+proc means data = Work.zad6 max;
+    var maxlok; /* Maksimum ze zmiennej maxlok jest liczbą maksimów lokalnych wartości zmiennej index. */
+run;
+
+/*zadanie 7****************************************************************;*/
+
+data zad7;
+set lib.l02z07 end = K;
+merge lib.l02z07 lib.l02z07(firstobs = 2 rename=(x=nextx)); /* Tworzymy kolumnę pomocniczą, w której zapisujemy następne obserwacje. */
+lagx = lag(x); /* Obserwacje lagx są poprzednimi obserwacjami z własności funkcji lag. */
+if (x < -1e6) then x = (nextx + lagx)/2;
+run;
+
+/*zadanie 8****************************************************************;*/
+
+data zad8;
+set lib.l02z08;
+if(RANUNI(i) > 0.5) then
+do;
+y = .;
+output;
+i + 1;
+end;
+else
+do;
+x = .;
+output;
+i + 1;
+end;
+drop i;
+run;
+
+/*zadanie 9****************************************************************;*/
+
+/* Dystrybuanta */
+
+data Fx;
+do i = 1 to 10;
+dystr = i / 10; /* Zakładamy, że nasza zmienna losowa może przyjmować 10 wartości oraz
+tymi wartościami są: 1, ..., 10. Jest to rozkład jednostajny dyskretny na zbiorze {1, ..., 10}. */
+output;
+end;
+run;
+
+/* Odtwarzanie rozkładu */
+
+data px;
+do i = 1 to 100;
+x = floor(10 * RANUNI(i))+ 1;
+output;
+end;
+run;
+
+/*zadanie 10***************************************************************;*/
+
+/* Zakładamy, że jest 1000 kroków w błądzeniu losowym. */
+
+data zad10;
+x = 0;
+y = 0;
+maxmodx = 0;
+maxmody = 0;
+do i = 1 to 1000;
+if(RANUNI(i) >= 0.5) then
+do;
+x + 1;
+modx = abs(x);
+mody = abs(y);
+if(modx >= maxmodx) then maxmodx = modx;
+if(mody >= maxmody) then maxmody = mody;
+if(x > y & lag(x) = lag(y) & lag2(x) < lag2(y)) then lprzeciec + 1;
+if(x < y & lag(x) = lag(y) & lag2(x) > lag2(y)) then lprzeciec + 1;
+output;
+end;
+if(RANUNI(i) < 0.5) then
+do;
+x = x - 1;
+modx = abs(x);
+mody = abs(y);
+if(modx >= maxmodx) then maxmodx = modx;
+if(mody >= maxmody) then maxmody = mody;
+if(x > y & lag(x) = lag(y) & lag2(x) < lag2(y)) then lprzeciec + 1;
+if(x < y & lag(x) = lag(y) & lag2(x) > lag2(y)) then lprzeciec + 1;
+output;
+end;
+if(RANUNI(i + 1000) >= 0.5) then /* x, y są niezależne, więc ziarna generatora dla x, y nie mogą się pokrywać. */
+do;
+y + 1;
+modx = abs(x);
+mody = abs(y);
+if(modx >= maxmodx) then maxmodx = modx;
+if(mody >= maxmody) then maxmody = mody;
+if(x > y & lag(x) = lag(y) & lag2(x) < lag2(y)) then lprzeciec + 1;
+if(x < y & lag(x) = lag(y) & lag2(x) > lag2(y)) then lprzeciec + 1;
+output;
+end;
+if(RANUNI(i + 1000) < 0.5) then
+do;
+y = y - 1;
+modx = abs(x);
+mody = abs(y);
+if(modx >= maxmodx) then maxmodx = modx;
+if(mody >= maxmody) then maxmody = mody;
+if(x > y & lag(x) = lag(y) & lag2(x) < lag2(y)) then lprzeciec + 1;
+if(x < y & lag(x) = lag(y) & lag2(x) > lag2(y)) then lprzeciec + 1;
+output;
+end;
+if (x = y) then wspwierz + 1;
+end;
+/* a) */
+put "Maksymalne odchylenie od zera trajektorii x wynosi: " maxmodx;
+put "Maksymalne odchylenie od zera trajektorii y wynosi: " maxmody;
+/* b) */
+put "Liczba wspólnych wierzchołków wynosi: " wspwierz;
+retain maxmodx 0 maxmody 0;
+/* c) */
+put "Liczba przecięć trajektori wynosi: " lprzeciec;
+run;

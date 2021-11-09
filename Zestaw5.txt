@@ -1,0 +1,318 @@
+/*
+LABORATORIUM NR: 5
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 (wszystkie)
+UWAGI: Brak
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_4'; /* U mnie w folderze Praca_domowa_4 są wszystkie pliki, które podano do zestawu piątego. */
+
+/*zadanie 1****************************************************************;*/
+
+/* plik1 */
+
+/* plik1 czytamy według wierszy. */
+
+data l05z01_1;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z01_plik1.txt';
+length nazwisko $ 30;
+INPUT id $ nazwisko $ wzrost $ plec $ rachunek_telefoniczny;
+run;
+
+/* plik2 */
+
+/* Przekazuję separator przez zmienną. */
+
+data l05z01_2;
+
+INFILE '/folders/myfolders/Praca_domowa_4/L05z01_plik2.txt' dlm = separator;
+input @1 separator $1. @;
+input @2 id $ nazwisko $ rachunek_telefoniczny $ imie $ plec $ waga;
+
+run;
+
+/* plik3 */
+
+/* plik3 czytamy według kolumn. */
+
+data l05z01_3;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z01_plik3.txt';
+INPUT id $ 1-2 nazwisko $ 3-12 imie $ 13-18 waga $ 19-21 plec $ 22 wzrost 23-25;
+run;
+
+/* plik4 */
+
+/* plik4 czytamy w sposób mieszany. */
+
+data l05z01_4;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z01_plik4.txt';
+length imie $ 30;
+length nazwisko $ 30;
+length data_urodzenia $ 11;
+input id $ imie $ nazwisko $ & wzrost: commax5.2 data_urodzenia $ plec $;
+run;
+
+/*zadanie 2****************************************************************;*/
+
+data l05z02;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z02_eksperyment.txt' missover;
+input dzien yymmdd8. wskazanie: commax5.2 sygnal $;
+if(sygnal = 'START') then
+do;
+    data_pocz = dzien;
+    wskazanie_pocz = wskazanie;
+    nr_eks + 1;
+end;
+if(sygnal = 'STOP') then
+do;
+    data_kon = dzien;
+    wskazanie_kon = wskazanie;
+    roznica_wskazan = abs(wskazanie_kon - wskazanie_pocz);
+    czas_trwania = data_kon - data_pocz + 1; /* Liczba dni między końcem, a początkiem eksperymentu. */
+    output;
+end;
+retain data_pocz 0 data_kon 0 data_pocz 0 data_kon 0 wskazanie_pocz 0 wskazanie_kon 0;
+keep nr_eks roznica_wskazan czas_trwania;
+run;
+
+proc sort data = l05z02 out = l05z02_sort;
+by roznica_wskazan;
+run;
+
+/* Sprawdzamy, dla którego eksperymentu jest największa różnica wskazań. */
+data gdzie_maks;
+set l05z02_sort end = koniec;
+by roznica_wskazan;
+if (koniec) then output;
+run;
+
+/*zadanie 3****************************************************************;*/
+
+data z3;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z03_plik.txt';
+input dzien yymmdd10. @;
+input @13 (indeks1 - indeks5) (1. + 5) /* Tu wczytuję według kolumn. */
+        @15 (liczba1 - liczba5) (2. + 4); /* Widzimy ze zbioru, że wartości q są oddalone o 6 znaków. */
+if dzien ^= '.' then data = dzien; /* Unikam wyświetlania daty jako braku danych. */
+format data date9.;
+array letter[5] indeks:; /* Dzięki tej tablicy, do odpowiedniego q dobiorę odpowiednią liczbę. */
+array number[5] liczba:;
+array q[5];
+do i = 1 to 5;
+    q[letter[i]] = number[i]; /* Przypisuję odpowiednim q, odpowiednią wartość. */
+end;
+    drop dzien indeks: liczba: i;
+    retain data;
+run;
+
+/*zadanie 4****************************************************************;*/
+
+data L05z04_plik;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z04_plik.txt' missover;
+input ktory $ 2-3 osoba1 $ 5-9 osoba2 $ 11-15 kwota_os1 $ kwota_os2 @;
+input data YYMMDD10.;
+format data date11.;
+if(data ^= .) then idx_data = _N_;
+if(data = .) then set L05z04_plik point = idx_data;
+retain idx_data 0;
+drop idx_data;
+run;
+
+/*zadanie 5****************************************************************;*/
+
+data  plika(keep= id kod wynik where=(kod='k'))
+       plikb(keep= id kod wynik);
+INFILE '/folders/myfolders/Praca_domowa_4/L05z05_plik.txt' missover;
+/* Największa ilość liczb w jedenej linijce to 10. */
+input id $ 1 - 5 litera1 $ liczba1  litera2 $ liczba2  litera3 $ liczba3  litera4 $ liczba4  litera5 $ liczba5  litera6 $ liczba6  litera7 $ liczba7  litera8 $ liczba8  litera9 $ liczba9  litera10 $ liczba10 @;
+array litera(10) litera:;
+array liczba(10) liczba:;
+do i=1 to 10;
+if litera[i] ^= "" then
+do;
+    kod = litera[i];
+    wynik = liczba[i];
+    output;
+    end;
+end;
+run;
+
+/*zadanie 6****************************************************************;*/
+
+data zad6;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z06_plik.txt' dlm = " . ";
+input liczba1 $ liczba2 $ liczba3;
+run;
+
+/*zadanie 7****************************************************************;*/
+
+data zad7;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z07_plik.txt' missover end = last;
+input data x1-x12;
+run;
+
+data zad7;
+    array tab(84, 5) (420 * 0);
+    array nr[5] (5 * 0);
+    array r[5] r1 - r5 (1977 1978 1979 1980 1981);
+    set zad7 end = koniec nobs = ile_obs;
+
+    array x[*] x1 - x12; /* W naszym pliku, dla każdego roku jest co najwyżej 12 wartości. */
+    do j = 1 to 5;
+        if data = r[j] then
+        do;
+            do i = 1 to dim(x);
+                tab[i + nr[j], j] + x[i];
+            end;
+            nr[j] = nr[j] + dim(x);
+        end;
+    end;
+    if(koniec) then output;
+    keep tab:;
+run;
+
+data zad7_wynik;
+set zad7;
+array liczby[*] _all_;
+array zmienne[5] zm1 - zm5;
+do i = 1 to 83;
+    do j = 1 to 5;
+        zmienne[j] = liczby((i - 1) * 5 + j);
+        if zmienne[j] = 0 then zmienne[j] = .;
+    end;
+    output;
+end;
+keep zm:;
+run;
+
+/*zadanie 8****************************************************************;*/
+
+data zad8;
+INFILE '/folders/myfolders/Praca_domowa_4/L05z08_plik.txt' N = 112;
+array b[12];
+input#(1) nr_pier_w1 - nr_pier_w12; /* Wczytuję pierwszy wiersz. */
+array tab_pier_w[12] nr_pier_w1 - nr_pier_w12;
+do i = 1 to 12;
+    input#(tab_pier_w[i]) liczba1 - liczba12;
+    /* Biorę tylko te wiersze naszego pliku, których numery znajdują się w pierwszym wierszu tego pliku. */
+    output;
+end;
+keep liczba:;
+run;
+
+/*zadanie 9****************************************************************;*/
+
+/* (1) */
+
+data zad9_a_krok1;
+array liczby_z_pliku(112, 12) (1344 * 0);
+set lib.l05z09 end = koniec;
+array kol[*] kol1 - kol12 _TEMPORARY_;
+do i = 1 to 12;
+    liczby_z_pliku[_N_, i] + kol[i];
+end;
+if(koniec) then output;
+keep liczby_z_pliku:;
+run;
+
+data zad9_a_wynik;
+set zad9_a_krok1;
+array liczby_z_pliku(112, 12) liczby_z_pliku1 - liczby_z_pliku1344;
+array nr_z_pier_w[12] (12 * 0);
+do i = 1 to 12;
+    do j = 1 to 12;
+        nr_z_pier_w[j] = liczby_z_pliku[liczby_z_pliku[1, i], j];
+    end;
+    output;
+end;
+keep nr_z_pier_w:;
+run;
+
+/* (2) */
+
+data zad9_b_wynik;
+nr_wiersza = 1;
+set lib.l05z09(rename = (kol1 - kol12 = nr_pier_w1 - nr_pier_w12)) point = nr_wiersza;
+array nr_z_pier_w[12] nr_pier_w1 - nr_pier_w12;
+do i = 1 to 12; /* Biorę te wiersze, których numery są w pierwszym wierszu naszego pliku. */
+    wiersz = nr_z_pier_w[i];
+    set lib.l05z09 point = wiersz;
+    output;
+end;
+keep kol:;
+stop;
+run;
+
+/*zadanie 10***************************************************************;*/
+
+data _null_;
+wierz = 1;
+put '-> 1'; /* Zaczynam od korzenia, czyli od wierzchołka nr 1. */
+set lib.l05z10_drzewo point = wierz;
+do while(wierz ne .); /* Dopóki wierzchołek ma potomki (zmienna "lewy" lub "prawy" nie ma braku danych), to wędruję dalej po drzewie. */
+    if (lewy ^= . or prawy ^= .) then
+    do;
+        ktora_strona = 20 * RANUNI(0);
+        if (ktora_strona < 10 & lewy ^= .) then
+        do;
+            put '-> ' lewy;
+            wierz = lewy;
+        end;
+        else if (prawy ^= .) then
+        do;
+            put '-> ' prawy;
+            wierz = prawy;
+        end;
+    end;
+    else if (lewy = . & prawy = .) then stop;
+    set lib.l05z10_drzewo point = wierz;
+end;
+run;
+
+/*zadanie 11***************************************************************;*/
+
+data L05z11_plik;
+set lib.l05z05_plikb;
+if(i = 1) then
+do;
+    put "Podsumowanie eksperymentu                 " nr_eksperymentu;
+    put "Dane Pacjenta nr                          " id;
+    put "+-------------------------------------------+";
+end;
+if (kod = 'x') then
+do;
+    if(i = 1) then put "Wyniki eksperymentów pośrednich: " @;
+    put wynik @;
+    i + 1;
+end;
+if (kod = "k") then
+do;
+    put "Wynik końcowy to: " wynik;
+    put "+-------------------------------------------+";
+    i = 1;
+    nr_eksperymentu + 1;
+end;
+retain nr_eksperymentu 1;
+run;
+
+/*zadanie 12***************************************************************;*/
+
+/* a) */
+
+PROC EXPORT
+        DATA = lib.L05z03_plik
+        OUTFILE= "/folders/myfolders/Praca_domowa_4/L05z03.xlsx"
+            DBMS=XLSX
+            ;
+RUN;
+
+/* b) */
+
+PROC EXPORT
+        DATA = lib.L05z04_plik
+        OUTFILE= "/folders/myfolders/Praca_domowa_4/L05z04.csv"
+            DBMS = CSV
+            ;
+RUN;
