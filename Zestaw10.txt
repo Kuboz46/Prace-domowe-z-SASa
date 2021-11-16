@@ -1,0 +1,333 @@
+/*
+LABORATORIUM NR: 10
+IMIE I NAZWISKO: Jakub Zbrzezny
+NUMER ALBUMU: 286689
+NUMERY ROZWIAZANYCH ZADAN: 1, 2, 3, 4, 5, 6, 7, 9 (wszystko)
+UWAGI: W tej liście dr Jabłoński wyrzucił zadanie 8.
+*/
+
+/*deklaracja bibliotek*/
+Libname lib '/folders/myfolders/Praca_domowa_9'; /* U mnie w folderze Praca_domowa_9 są wszystkie pliki, które podano do zestawu dziesiątego. */
+
+/*zadanie 1****************************************************************;*/
+
+options mprint;
+
+%macro stworz(prefiks, N, k, l);
+
+%do i = 1 %to &N;
+  data &prefiks&i;
+      array x[&k];
+      do a = 1 to &l;
+          do b = 1 to &k;
+              x[b] = rannor(0) + 10;
+          end;
+          output;
+      end;
+  drop a b;
+  run;
+%end;
+
+%mend stworz;
+
+%stworz(jedenzbior, 5, 3, 4);
+
+%stworz(jedenzbior, 1, 5, 1);
+
+%stworz(innyzbior, 5, 1, 4);
+
+
+/*zadanie 2****************************************************************;*/
+
+options mprint;
+
+%macro zlicz(zbior, zmienne, n);
+
+proc sql;
+select count(&zmienne) as ile_obserwacji
+from &zbior
+where &zmienne > &n
+;
+quit;
+
+%mend zlicz;
+
+data zbior_testowy1;
+x = 4; output;
+x = 5; output;
+x = 6; output;
+x = 7; output;
+run;
+
+options mprint;
+%zlicz(zbior_testowy1, x, 5);
+
+data zbior_testowy2;
+x = 5; output;
+x = -2; output;
+x = 3.5; output;
+x = 0; output;
+run;
+
+options mprint;
+%zlicz(zbior_testowy2, x, 0);
+
+data zbior_testowy3;
+x = 3.2; output;
+x = 3.1; output;
+x = 3.6; output;
+x = 3.9; output;
+run;
+
+%zlicz(zbior_testowy3, x, 3.5);
+
+/*zadanie 3****************************************************************;*/
+
+options mprint;
+
+/* Tworzę 54 zbiorów, gdzie w i tym zbiorze jest tylko zmienna zi. Biorę tylko dane bez braków, by przesunąć liczby do góry. */
+%macro przekszt;
+%do i = 1 %to 54;
+    data zbior&i;
+    set lib.l10z03_kropki(rename = (z1 - z54 = a1 - a54));
+    z&i = a&i;
+    drop a1 - a54;
+    if (z&i ^= .) then output;
+    run;
+%end;
+run;
+
+data krok1;
+    merge %do i = 1 %to 54;
+        zbior&i
+        %end;;
+run;
+
+proc transpose data = krok1 out = krok2(drop = _NAME_) prefix= z;
+
+/* Robię analogiczną procedurę jak na początku. Jak w transponowanym zbiorze wartości przenoszę do góry, to wtedy
+w zwykłym zbiorze liczby przesuwane są na lewo. */
+%do i = 1 %to 14;
+    data zbior&i;
+    set krok2(rename = (z1 - z14 = a1 - a14));
+    z&i = a&i;
+    drop a1 - a14;
+    if (z&i ^= .) then output;
+    run;
+%end;
+run;
+
+data krok3;
+    merge %do i = 1 %to 14;
+        zbior&i
+        %end;;
+run;
+
+/* Wracam do porządku wyjściowego (taki, jaki ma zbiór z kropkami i oczekiwany zbiór bez kropek. */
+proc transpose data = krok3 out = lib.zbior_bez_kropek(drop = _NAME_) prefix = z;
+
+%mend przekszt;
+
+%przekszt;
+
+/*zadanie 4****************************************************************;*/
+
+options mprint;
+
+/* a) */
+
+%macro zbior_srednie1(A, N);
+
+data srednie;
+set &A;
+array zm_num _NUMERIC_;
+x = zm_num[1];
+do j = 0 to (&N - _N_);
+    nastj = (_N_+j);
+    set &A(RENAME = (x = zm_num_nextj)) point = nastj ;
+    suma + zm_num_nextj;
+end;
+mean = suma / (&N - _N_ + 1);
+suma = 0;
+
+drop j zm_num_nextj suma;
+
+run;
+
+%mend zbior_srednie1;
+
+
+data zb_test;
+do i = 1 to 150;
+    x = i;
+    output;
+end;
+drop i;
+run;
+
+%zbior_srednie1(zb_test, 150);
+
+/* b) */
+
+%macro zbior_srednie2(A, N);
+
+data zbior;
+set &A;
+array zm_num _NUMERIC_;
+x = zm_num[1];
+run;
+
+proc transpose data = zbior out = zbior_transp;
+run;
+
+data srednie;
+set zbior_transp;
+array col(&N) col:;
+do i = 1 to &N;
+    do j = i to &N;
+        suma + col[j];
+    end;
+    mean = suma / (&N - i + 1);
+    suma = 0;
+    output;
+end;
+drop COL1 - COL150 i j suma;
+run;
+
+%mend zbior_srednie2;
+
+%zbior_srednie2(zb_test, 150); /* zb_test to jest ten sam zbiór, co w podpunkcie a). */
+
+/*zadanie 5****************************************************************;*/
+
+options mprint;
+
+/* a) */
+
+/* W treści zadania widać, że wynik zależy tylko od argumentu NAPIS. */
+
+%macro liczba_liter_w_slowie(NAPIS);
+
+%let i = 1;
+
+%let slowo = %scan(&NAPIS, &i);
+
+%do %while(&slowo ne );
+    %put &slowo = %length(&slowo);
+    %let i=%eval(&i+1);
+    %let slowo=%scan(&NAPIS,&i);
+%end;
+
+%mend liczba_liter_w_slowie;
+
+%liczba_liter_w_slowie(Ala ma aparat);
+
+/* b) */
+
+%macro liczba_wystapien_w_slowie(NAPIS, LITERA);
+
+%let i = 1;
+
+%let slowo = %scan(&NAPIS, &i);
+
+%do %while(&slowo ne);
+    %put &slowo = %sysevalf(%sysfunc(count(&slowo,&LITERA)) + %sysfunc(count(&slowo, %upcase(&LITERA))));
+    /* Tutaj dla funkcji count 'a', to nie jest to samo, co "A". */
+    %let i=%eval(&i+1);
+    %let slowo=%scan(&NAPIS,&i);
+%end;
+
+%mend liczba_wystapien_w_slowie;
+
+%liczba_wystapien_w_slowie(Ala ma aparat, a);
+
+
+/*zadanie 6****************************************************************;*/
+
+options mprint;
+
+%macro zmod_silnia(arg);
+
+%let krok = %sysfunc(count("&arg", !));
+%let liczba = %scan(&arg, 1);
+
+%let wynik = &liczba;
+
+%do %while (&liczba > &krok);
+    %let wynik = %eval(&wynik * (&liczba - &krok));
+    %let liczba = %eval(&liczba - &krok);
+%end;
+
+%put "Wynik to &wynik";
+
+%mend zmod_silnia;
+
+%zmod_silnia(5!);
+
+%zmod_silnia(8!!);
+
+%zmod_silnia(11!!!);
+
+/*zadanie 7****************************************************************;*/
+
+options mprint;
+
+%macro slowo_bez_tego(NAZWY, ZNAKI);
+
+%let i = 1;
+%let slowo = %sysfunc(scan(&NAZWY, &i, %str( )));
+
+%do %while(&slowo ne);
+    %let ile_znakow = %sysfunc(countw(&ZNAKI, %str( )));
+    %let czy_jest_znak = 0;
+    %do iter = 1 %to &ile_znakow;
+        %let ten_znak = %sysfunc(scan(&ZNAKI, &iter, str( )));
+        %if %sysfunc(index(&slowo,&ten_znak)) %then %let czy_jest_znak = %eval(&czy_jest_znak + 1);
+    %end;
+    %if %eval(&czy_jest_znak = 0) %then %put Wyraz bez tych znaków: &slowo;
+    %let i=%eval(&i+1);
+    %let slowo=%sysfunc(scan(&NAZWY,&i, %str( )));
+%end;
+
+%mend slowo_bez_tego;
+
+%slowo_bez_tego(Ala ma kota!, ! l);
+
+/*zadanie 9****************************************************************;*/
+
+options mprint;
+
+%macro komb(n, k);
+
+data zbiorod1don;
+array elem(&n) elem1 - elem&n;
+do i = 1 to &n;
+    elem[i] = i;
+end;
+run;
+
+data kombinacje;
+set zbiorod1don;
+   array elem(&n) elem1 - elem&n;
+   array kombinacja(&k) komb1 - komb&k;
+   ncomb=comb(&n, &k);
+   do ktora_kombinacja=1 to ncomb;
+      call allcomb(ktora_kombinacja, &k, of elem[*]);
+      do i = 1 to &k;
+          kombinacja(i) = elem(i);
+      end;
+      output;
+   end;
+   drop i ncomb elem1 - elem&n;
+run;
+
+
+%mend komb;
+
+%komb(2, 1); /* Powinny być 2 podzbiory. */
+
+%komb(4, 2); /* Powinno być 6 podzbiorów. */
+
+%komb(6, 4); /* Powinny być 15 podzbiorów. */
+
+%komb(8, 7); /* Powinno być 8 podzbiorów. */
